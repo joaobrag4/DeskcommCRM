@@ -54,6 +54,8 @@ interface Props {
   onPublishSuccess: () => void;
   onAutoFit?: () => void;
   canAutoFit?: boolean;
+  onOpenPreview?: () => void;
+  previewActive?: boolean;
 }
 
 const HANDOFF_LABEL: Record<FollowupFlowDetailRow["handoff_policy"], string> = {
@@ -74,6 +76,8 @@ export function PublishBar({
   onPublishSuccess,
   onAutoFit,
   canAutoFit = false,
+  onOpenPreview,
+  previewActive = false,
 }: Props) {
   const t = useT();
   const [openDeleteSelection, setOpenDeleteSelection] = useState(false);
@@ -168,6 +172,19 @@ export function PublishBar({
           </Select>
         )}
 
+        {onOpenPreview && (
+          <Button
+            type="button"
+            variant={previewActive ? "default" : "outline"}
+            size="sm"
+            onClick={onOpenPreview}
+            aria-pressed={previewActive}
+            aria-controls="flow-preview-panel"
+            data-testid="open-flow-preview"
+          >
+            {t("Prévia")}
+          </Button>
+        )}
         <Button type="button" variant="secondary" size="sm" disabled={!dirty || busy} onClick={onSave}>
           {save.isPending ? t("Salvando…") : t("Salvar")}
         </Button>

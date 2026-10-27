@@ -79,6 +79,16 @@ export function toFlowNode(n: RFNode): FlowNode {
       return { ...shared, type, config: n.data.config as ConfigOf<"move_lead"> };
     case "edit_lead_tag":
       return { ...shared, type, config: n.data.config as ConfigOf<"edit_lead_tag"> };
+    case "http_request":
+      return { ...shared, type, config: n.data.config as ConfigOf<"http_request"> };
+    case "interactive_menu":
+      return { ...shared, type, config: n.data.config as ConfigOf<"interactive_menu"> };
+    case "flow_connection":
+      return { ...shared, type, config: n.data.config as ConfigOf<"flow_connection"> };
+    case "conversion_pixel":
+      return { ...shared, type, config: n.data.config as ConfigOf<"conversion_pixel"> };
+    case "carousel":
+      return { ...shared, type, config: n.data.config as ConfigOf<"carousel"> };
     case "end":
       return { ...shared, type, config: n.data.config as ConfigOf<"end"> };
     case "collect":

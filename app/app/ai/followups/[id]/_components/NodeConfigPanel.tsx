@@ -25,6 +25,11 @@ import { EditLeadTagForm } from "./forms/EditLeadTagForm";
 import { RepeatForm } from "./forms/RepeatForm";
 import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
+import { HttpRequestForm } from "./forms/HttpRequestForm";
+import { InteractiveMenuForm } from "./forms/InteractiveMenuForm";
+import { FlowConnectionForm } from "./forms/FlowConnectionForm";
+import { ConversionPixelForm } from "./forms/ConversionPixelForm";
+import { CarouselForm } from "./forms/CarouselForm";
 import type { ConfigOf } from "./forms/shared";
 import { NODE_VISUALS } from "./nodes/nodeVisuals";
 
@@ -168,6 +173,36 @@ export function NodeConfigPanel({
         {type === "edit_lead_tag" && (
           <EditLeadTagForm
             config={node.data.config as ConfigOf<"edit_lead_tag">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "http_request" && (
+          <HttpRequestForm
+            config={node.data.config as ConfigOf<"http_request">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "interactive_menu" && (
+          <InteractiveMenuForm
+            config={node.data.config as ConfigOf<"interactive_menu">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "flow_connection" && (
+          <FlowConnectionForm
+            config={node.data.config as ConfigOf<"flow_connection">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "conversion_pixel" && (
+          <ConversionPixelForm
+            config={node.data.config as ConfigOf<"conversion_pixel">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "carousel" && (
+          <CarouselForm
+            config={node.data.config as ConfigOf<"carousel">}
             onChange={(config) => onChange({ config })}
           />
         )}

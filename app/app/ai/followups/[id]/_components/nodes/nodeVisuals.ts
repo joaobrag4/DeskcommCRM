@@ -1,6 +1,25 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag } from "@/lib/ui/icons";
+import {
+  Bell,
+  Play,
+  Clock,
+  GitBranch,
+  Brain,
+  ChatCircle,
+  ArrowsClockwise,
+  PaperPlaneTilt,
+  Flag,
+  Question,
+  PuzzlePiece,
+  Funnel,
+  Tag,
+  Globe,
+  ListChecks,
+  FlowArrow,
+  Megaphone,
+  ImageSquare,
+} from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -187,6 +206,91 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Gravar tag no lead",
     defaultConfig: () => ({ tags: [] }),
   },
+  http_request: {
+    type: "http_request",
+    paletteLabel: "Requisição HTTP",
+    icon: Globe,
+    chipClassName: "bg-info-bg text-info-fg",
+    borderClassName: "border-l-info",
+    defaultLabel: "Requisição HTTP",
+    defaultConfig: () => ({
+      method: "POST",
+      url: "https://",
+      headers: {},
+      body: "{}",
+      timeout_ms: 10000,
+    }),
+  },
+  interactive_menu: {
+    type: "interactive_menu",
+    paletteLabel: "Menu interativo",
+    icon: ListChecks,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Menu interativo",
+    defaultConfig: () => ({
+      body: "Escolha uma opção:",
+      menu_type: "buttons",
+      options: [
+        { id: "opt_1", title: "Opção 1" },
+        { id: "opt_2", title: "Opção 2" },
+      ],
+      timeout_ms: 86400000,
+    }),
+  },
+  flow_connection: {
+    type: "flow_connection",
+    paletteLabel: "Conectar fluxo",
+    icon: FlowArrow,
+    chipClassName: "bg-warning-bg text-warning-fg",
+    borderClassName: "border-l-warning",
+    defaultLabel: "Conectar a outro fluxo",
+    defaultConfig: () => ({
+      target_flow_id: "",
+      inherit_context: true,
+    }),
+  },
+  conversion_pixel: {
+    type: "conversion_pixel",
+    paletteLabel: "Pixel de conversão",
+    icon: Megaphone,
+    chipClassName: "bg-success-bg text-success-fg",
+    borderClassName: "border-l-success",
+    defaultLabel: "Disparar conversão",
+    defaultConfig: () => ({
+      provider: "both",
+      event_name: "Lead",
+      currency: "BRL",
+    }),
+  },
+  carousel: {
+    type: "carousel",
+    paletteLabel: "Carrossel",
+    icon: ImageSquare,
+    chipClassName: "bg-accent text-accent-foreground",
+    borderClassName: "border-l-accent-700",
+    defaultLabel: "Carrossel de cartões",
+    defaultConfig: () => ({
+      cards: [
+        {
+          id: "card_1",
+          media_url: "",
+          media_type: "image",
+          title: "Item 1",
+          description: "Descrição do cartão 1",
+          buttons: [{ id: "btn_1", label: "Ver mais" }],
+        },
+        {
+          id: "card_2",
+          media_url: "",
+          media_type: "image",
+          title: "Item 2",
+          description: "Descrição do cartão 2",
+          buttons: [{ id: "btn_2", label: "Ver mais" }],
+        },
+      ],
+    }),
+  },
   end: {
     type: "end",
     paletteLabel: "Fim",
@@ -213,6 +317,10 @@ function minutos(ms: number): string {
   return `${Math.round(ms / 60_000)} min`;
 }
 
+function duracaoDaEspera(ms: number, t: (texto: string) => string): string {
+  return ms < 60_000 ? `${Math.round(ms / 1_000)} ${t("s")}` : minutos(ms);
+}
+
 /**
  * One-line summary of a node's config — shown as the card subtitle. Takes the
  * RF node's own `type`/`data.config` pair (not a reconstructed `FlowNode`)
@@ -232,9 +340,12 @@ export function describeNodeConfig(
       return t("Início do fluxo");
     case "wait": {
       const c = config as ConfigOf<"wait">;
-      return c.mode === "fixed"
-        ? minutos(c.duration_ms)
-        : `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
+      if (c.mode === "fixed") return duracaoDaEspera(c.duration_ms, t);
+      if (c.mode === "smart") return `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
+      if (c.mode === "business_hours") return `${t("Horário comercial")} ${c.start_time}–${c.end_time}`;
+      if (c.mode === "time_of_day") return `${t("Às")} ${c.target_time}${c.delay_days > 0 ? ` (+${c.delay_days}d)` : ""}`;
+      if (c.mode === "business_days") return `${c.days} ${c.days === 1 ? t("dia útil") : t("dias úteis")}${c.deliver_at ? ` ${t("às")} ${c.deliver_at}` : ""}`;
+      return t("Aguardar");
     }
     case "condition": {
       const c = config as ConfigOf<"condition">;
@@ -292,6 +403,28 @@ export function describeNodeConfig(
     case "edit_lead_tag": {
       const c = config as ConfigOf<"edit_lead_tag">;
       return c.tags.length ? c.tags.join(", ") : t("sem tag escolhida");
+    }
+    case "http_request": {
+      const c = config as ConfigOf<"http_request">;
+      return `${c.method} ${c.url ? c.url : t("sem URL configurada")}`;
+    }
+    case "interactive_menu": {
+      const c = config as ConfigOf<"interactive_menu">;
+      const opts = c.options?.length ?? 0;
+      return `${opts} ${opts === 1 ? t("opção") : t("opções")} · ${c.menu_type === "buttons" ? t("botões") : t("lista")}`;
+    }
+    case "flow_connection": {
+      const c = config as ConfigOf<"flow_connection">;
+      return c.target_flow_id ? t("Transferir para outro fluxo") : t("sem fluxo de destino");
+    }
+    case "conversion_pixel": {
+      const c = config as ConfigOf<"conversion_pixel">;
+      return `${c.provider.toUpperCase()} · ${c.event_name}`;
+    }
+    case "carousel": {
+      const c = config as ConfigOf<"carousel">;
+      const cards = c.cards?.length ?? 0;
+      return `${cards} ${cards === 1 ? t("cartão") : t("cartões")}`;
     }
     case "end": {
       const c = config as ConfigOf<"end">;

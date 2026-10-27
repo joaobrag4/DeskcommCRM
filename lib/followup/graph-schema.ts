@@ -30,6 +30,12 @@ export const NODE_TYPES = [
   // fora desta fatia e é o passo seguinte da issue.
   'move_lead',
   'edit_lead_tag',
+  // Novos nós de integração, interatividade e controle (compatibilidade Leona)
+  'http_request',
+  'interactive_menu',
+  'flow_connection',
+  'conversion_pixel',
+  'carousel',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -97,14 +103,14 @@ export const edgeBranchIdSchema = z
 /**
  * Wait node configuration schema.
  * Supports two modes:
- * - fixed: absolute wait duration in milliseconds (5 min to 90 days)
- * - smart: adaptive wait with min/max range and optional guidance
+ * - fixed: absolute wait duration in milliseconds (5 s to 90 days)
+ * - smart: adaptive wait with min/max range (5 min minimum) and optional guidance
  */
 export const waitConfigSchema = z
   .discriminatedUnion('mode', [
     z.strictObject({
       mode: z.literal('fixed'),
-      duration_ms: z.number().int().min(300_000).max(7_776_000_000),
+      duration_ms: z.number().int().min(5_000).max(7_776_000_000),
       /**
        * A espera NÃO é encurtada nem cancelada quando o contato manda mensagem.
        *
@@ -130,6 +136,28 @@ export const waitConfigSchema = z
       min_ms: z.number().int().min(300_000),
       max_ms: z.number().int().max(7_776_000_000),
       guidance: z.string().max(500).optional(),
+    }),
+    z.strictObject({
+      mode: z.literal('business_hours'),
+      start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
+      end_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('18:00'),
+      days_of_week: z.array(z.number().int().min(0).max(6)).default([1, 2, 3, 4, 5]),
+      timezone: z.string().default('America/Sao_Paulo'),
+      immune_to_reply: z.boolean().optional(),
+    }),
+    z.strictObject({
+      mode: z.literal('time_of_day'),
+      target_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
+      delay_days: z.number().int().min(0).max(30).default(0),
+      timezone: z.string().default('America/Sao_Paulo'),
+      immune_to_reply: z.boolean().optional(),
+    }),
+    z.strictObject({
+      mode: z.literal('business_days'),
+      days: z.number().int().min(1).max(30).default(1),
+      deliver_at: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+      timezone: z.string().default('America/Sao_Paulo'),
+      immune_to_reply: z.boolean().optional(),
     }),
   ])
   .refine((c) => c.mode !== 'smart' || c.min_ms <= c.max_ms, {
@@ -502,6 +530,95 @@ export const endConfigSchema = z.strictObject({
 });
 
 /**
+ * HTTP request node configuration (Webhooks/REST).
+ */
+export const httpRequestConfigSchema = z.strictObject({
+  method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).default('POST'),
+  url: z.string().default(''),
+  headers: z.record(z.string(), z.string()).default({}),
+  body: z.string().default(''),
+  timeout_ms: z.number().int().min(1000).max(30000).default(10000),
+  save_response_path: z.string().optional(),
+});
+export type HttpRequestConfig = z.infer<typeof httpRequestConfigSchema>;
+
+/**
+ * Interactive menu node configuration (WhatsApp buttons / list).
+ */
+export const interactiveMenuOptionSchema = z.strictObject({
+  id: edgeBranchIdSchema,
+  title: z.string().min(1).max(24),
+  description: z.string().max(72).optional(),
+});
+
+export const interactiveMenuConfigSchema = z.strictObject({
+  body: z.string().min(1).max(1024).default('Escolha uma opção:'),
+  header: z.string().max(60).optional(),
+  footer: z.string().max(60).optional(),
+  menu_type: z.enum(['buttons', 'list']).default('buttons'),
+  options: z.array(interactiveMenuOptionSchema).min(1).max(10).default([
+    { id: 'opcao_1', title: 'Opção 1' },
+    { id: 'opcao_2', title: 'Opção 2' },
+  ]),
+  timeout_ms: z.number().int().min(60000).max(604800000).default(86400000), // 24h default
+});
+export type InteractiveMenuConfig = z.infer<typeof interactiveMenuConfigSchema>;
+
+/**
+ * Flow connection node configuration (subflows / jumping between flows).
+ */
+export const flowConnectionConfigSchema = z.strictObject({
+  target_flow_id: z.string().default(''),
+  target_node_id: z.string().optional(),
+  inherit_context: z.boolean().default(true),
+});
+export type FlowConnectionConfig = z.infer<typeof flowConnectionConfigSchema>;
+
+/**
+ * Conversion pixel node configuration (Meta CAPI & Google Ads).
+ */
+export const conversionPixelConfigSchema = z.strictObject({
+  provider: z.enum(['meta', 'google', 'both']).default('both'),
+  event_name: z.enum(['Lead', 'Schedule', 'Contact', 'Purchase', 'CompleteRegistration', 'Custom']).default('Lead'),
+  custom_event_name: z.string().max(60).optional(),
+  value: z.number().min(0).optional(),
+  currency: z.string().length(3).default('BRL'),
+});
+export type ConversionPixelConfig = z.infer<typeof conversionPixelConfigSchema>;
+
+/**
+ * Carousel card button schema.
+ */
+export const carouselCardButtonSchema = z.strictObject({
+  id: edgeBranchIdSchema,
+  label: z.string().min(1).max(20),
+  url: z.string().optional(),
+});
+
+/**
+ * Carousel card schema.
+ */
+export const carouselCardSchema = z.strictObject({
+  id: edgeBranchIdSchema,
+  media_url: z.string().default(''),
+  media_type: z.enum(['image', 'video']).default('image'),
+  title: z.string().min(1).max(80).default('Título do card'),
+  description: z.string().max(160).optional(),
+  buttons: z.array(carouselCardButtonSchema).max(3).optional(),
+});
+
+/**
+ * Carousel node configuration.
+ */
+export const carouselConfigSchema = z.strictObject({
+  cards: z.array(carouselCardSchema).min(2).max(10).default([
+    { id: 'card_1', media_url: '', media_type: 'image', title: 'Card 1', description: 'Descrição 1' },
+    { id: 'card_2', media_url: '', media_type: 'image', title: 'Card 2', description: 'Descrição 2' },
+  ]),
+});
+export type CarouselConfig = z.infer<typeof carouselConfigSchema>;
+
+/**
  * Flow node schema — discriminated union based on node type.
  * Each node type has its specific config schema.
  */
@@ -635,6 +752,61 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
       y: z.number(),
     }),
     config: editLeadTagConfigSchema,
+  }),
+  // Nó de integração: requisição HTTP / Webhook
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('http_request'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: httpRequestConfigSchema,
+  }),
+  // Nó interativo: menu com botões / lista WhatsApp
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('interactive_menu'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: interactiveMenuConfigSchema,
+  }),
+  // Nó de conexão: subfluxo / transição de fluxo
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('flow_connection'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: flowConnectionConfigSchema,
+  }),
+  // Nó de telemetria: evento de conversão Meta CAPI / Google Ads
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('conversion_pixel'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: conversionPixelConfigSchema,
+  }),
+  // Nó de carrossel de mídia
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('carousel'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: carouselConfigSchema,
   }),
   // End node: terminal state
   z.strictObject({
@@ -1007,6 +1179,59 @@ export function nodeBranches(node: BranchableNode): FlowBranch[] {
         },
         fallbackBranch(FALLBACK_OTHERS_LABEL),
       ];
+
+    case 'http_request':
+      return [
+        {
+          id: 'success',
+          label: 'Sucesso (2xx)',
+          check: null,
+          kind: 'match',
+          condition: { type: 'branch', branch_id: 'success' },
+        },
+        {
+          id: 'failure',
+          label: 'Falha',
+          check: null,
+          kind: 'match',
+          condition: { type: 'branch', branch_id: 'failure' },
+        },
+      ];
+
+    case 'interactive_menu': {
+      const branches: FlowBranch[] = (node.config.options ?? []).map((opt) => ({
+        id: opt.id,
+        label: opt.title,
+        check: null,
+        kind: 'match',
+        condition: { type: 'branch', branch_id: opt.id },
+      }));
+      return [
+        ...branches,
+        {
+          id: NO_REPLY_BRANCH_ID,
+          label: NO_REPLY_LABEL,
+          check: null,
+          kind: 'match',
+          condition: { type: 'branch', branch_id: NO_REPLY_BRANCH_ID },
+        },
+      ];
+    }
+
+    case 'carousel': {
+      const branches: FlowBranch[] = (node.config.cards ?? []).flatMap((card) =>
+        (card.buttons ?? []).map((btn) => ({
+          id: `${card.id}_${btn.id}`,
+          label: `${card.title}: ${btn.label}`,
+          check: null,
+          kind: 'match' as const,
+          condition: { type: 'branch' as const, branch_id: `${card.id}_${btn.id}` },
+        }))
+      );
+      return branches.length > 0
+        ? [...branches, fallbackBranch('Continuar')]
+        : [fallbackBranch(FALLBACK_ALWAYS_LABEL)];
+    }
 
     default:
       return [fallbackBranch(FALLBACK_ALWAYS_LABEL)];

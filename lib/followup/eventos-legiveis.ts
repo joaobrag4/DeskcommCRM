@@ -139,8 +139,15 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   // #2065 — as duas ações que também não falam com o cliente.
   move_lead: "Mover no funil",
   edit_lead_tag: "Editar tag",
+  http_request: "Requisição HTTP",
+  interactive_menu: "Menu interativo",
+  flow_connection: "Conexão de fluxo",
+  conversion_pixel: "Pixel de conversão",
+  carousel: "Carrossel",
   end: "Fim",
 };
+
+export const ROTULOS_DE_TIPO_DE_NO = TIPO_DO_NO;
 
 const DESFECHO: Record<string, string> = {
   converted: "converteu",
@@ -167,7 +174,13 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
         resumo:
           node.config.mode === "fixed"
             ? `espera ${duracaoLegivel(node.config.duration_ms)}`
-            : `espera adaptativa, entre ${duracaoLegivel(node.config.min_ms)} e ${duracaoLegivel(node.config.max_ms)}`,
+            : node.config.mode === "business_hours"
+              ? `espera até o horário comercial (${node.config.start_time} às ${node.config.end_time})`
+              : node.config.mode === "time_of_day"
+                ? `espera até as ${node.config.target_time}`
+                : node.config.mode === "business_days"
+                  ? `espera ${node.config.days} dia(s) úteis`
+                  : `espera adaptativa, entre ${duracaoLegivel(node.config.min_ms)} e ${duracaoLegivel(node.config.max_ms)}`,
       };
     case "condition":
       return {
@@ -216,6 +229,16 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
           ? `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
       };
+    case "http_request":
+      return { ...base, resumo: `dispara requisição ${node.config.method} para ${node.config.url || "URL pendente"}` };
+    case "interactive_menu":
+      return { ...base, resumo: `envia menu interativo (${node.config.options?.length ?? 0} opções)` };
+    case "flow_connection":
+      return { ...base, resumo: "transfere o lead para outro fluxo" };
+    case "conversion_pixel":
+      return { ...base, resumo: `dispara evento de conversão "${node.config.event_name}" (${node.config.provider})` };
+    case "carousel":
+      return { ...base, resumo: `envia carrossel com ${node.config.cards?.length ?? 0} cards` };
     case "end":
       return { ...base, resumo: `encerra — ${DESFECHO[node.config.outcome] ?? node.config.outcome}` };
   }

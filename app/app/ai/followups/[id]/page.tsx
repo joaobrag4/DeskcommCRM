@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { env } from "@/lib/env";
 import { rascunhoDoFluxo } from "@/lib/followup/rascunho";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
@@ -62,8 +63,25 @@ export default async function FollowupFlowBuilderPage({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <FlowBuilder flowId={id} initialData={flow} />
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <FlowBuilder
+        flowId={id}
+        initialData={flow}
+        previewOrigins={{
+          internalOrigin: mediaOrigin(env.SUPABASE_SERVER_URL),
+          publicOrigin: mediaOrigin(env.NEXT_PUBLIC_SUPABASE_URL),
+        }}
+      />
     </div>
   );
+}
+
+/** Only origins cross the server/client boundary; never credentials or private paths. */
+function mediaOrigin(value: string | undefined): string | undefined {
+  try {
+    const url = new URL(value ?? "");
+    return ["http:", "https:"].includes(url.protocol) ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
 }
