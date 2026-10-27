@@ -1,0 +1,1890 @@
+﻿{
+  "format": "followup_flow",
+  "version": 1,
+  "exported_at": "2026-01-01T00:00:00.000Z",
+  "flow": {
+    "name": "Cifras Gospel — demonstração anonimizada",
+    "surface": "followup",
+    "handoff_policy": "pause",
+    "trigger_config": {
+      "kind": "manual"
+    },
+    "graph": {
+      "nodes": [
+        {
+          "id": "start",
+          "type": "trigger",
+          "label": "Início",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "config": {}
+        },
+        {
+          "id": "welcome",
+          "type": "action",
+          "label": "Saudação e transparência",
+          "position": {
+            "x": 340,
+            "y": 0
+          },
+          "config": {
+            "mode": "text",
+            "body": "Oii, {{nome}}! 😊 Aqui é o atendimento virtual da Equipe Exemplo. Vi que você pediu informações sobre as cifras gospel. Vou te mostrar como funciona. Se quiser falar com uma pessoa, escreva HUMANO; se preferir encerrar mensagens, escreva PARAR."
+          }
+        },
+        {
+          "id": "pause1",
+          "type": "wait",
+          "label": "Pausa natural — 5 segundos",
+          "position": {
+            "x": 680,
+            "y": 0
+          },
+          "config": {
+            "mode": "fixed",
+            "duration_ms": 5000
+          }
+        },
+        {
+          "id": "audio1",
+          "type": "action",
+          "label": "Áudio 01 — mock",
+          "position": {
+            "x": 1020,
+            "y": 0
+          },
+          "config": {
+            "mode": "text",
+            "body": "Áudio de apresentação da Equipe Exemplo.",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/audio1.ogg"
+          }
+        },
+        {
+          "id": "ask_level",
+          "type": "action",
+          "label": "Pergunta inicial",
+          "position": {
+            "x": 1360,
+            "y": 0
+          },
+          "config": {
+            "mode": "text",
+            "body": "Você está começando no teclado ou já toca um pouco?"
+          }
+        },
+        {
+          "id": "reply_start",
+          "type": "match_reply",
+          "label": "Resposta à apresentação",
+          "position": {
+            "x": 0,
+            "y": 190
+          },
+          "config": {
+            "grace_timeout_ms": 1200000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "yes",
+                "label": "Sim",
+                "op": "contains",
+                "pattern": "sim"
+              },
+              {
+                "id": "want",
+                "label": "Quero",
+                "op": "contains",
+                "pattern": "quero"
+              },
+              {
+                "id": "can",
+                "label": "Pode",
+                "op": "contains",
+                "pattern": "pode"
+              },
+              {
+                "id": "no",
+                "label": "Não",
+                "op": "eq",
+                "pattern": "não"
+              }
+            ]
+          }
+        },
+        {
+          "id": "reminder1",
+          "type": "action",
+          "label": "Follow-up inicial — único",
+          "position": {
+            "x": 340,
+            "y": 190
+          },
+          "config": {
+            "mode": "text",
+            "body": "Oii, {{nome}}! Ficou alguma dúvida sobre as cifras? Posso resumir por texto. Se preferir deixar para outra hora, tudo bem; não vou insistir."
+          }
+        },
+        {
+          "id": "video_intro",
+          "type": "action",
+          "label": "Introdução do vídeo",
+          "position": {
+            "x": 680,
+            "y": 190
+          },
+          "config": {
+            "mode": "text",
+            "body": "Tudo bem! Vou te mandar um vídeo curto para você ver como funciona. ⬇️"
+          }
+        },
+        {
+          "id": "video1",
+          "type": "action",
+          "label": "Vídeo 01 — mock",
+          "position": {
+            "x": 1020,
+            "y": 190
+          },
+          "config": {
+            "mode": "text",
+            "body": "Demonstração do material. ⬇️",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/video1.mp4"
+          }
+        },
+        {
+          "id": "offer_list",
+          "type": "action",
+          "label": "Conteúdo do pacote principal",
+          "position": {
+            "x": 1360,
+            "y": 190
+          },
+          "config": {
+            "mode": "text",
+            "body": "🎹 Quer tocar hinos da igreja sem precisar ler partitura? O material inclui +400 Cifras Melódicas Gospel, +100 Corinhos Gospel, acordes do teclado, método para iniciantes e teoria e prática. Bônus descritos: +300 cifras extras, guia para conhecer o teclado, material para tocar de ouvido e grupo com videoaulas e conteúdos de apoio."
+          }
+        },
+        {
+          "id": "audio2",
+          "type": "action",
+          "label": "Áudio 02 — mock; revisar antes de publicar",
+          "position": {
+            "x": 0,
+            "y": 380
+          },
+          "config": {
+            "mode": "text",
+            "body": "Áudio original sobre a oferta (mock para revisão; conferir urgência e contribuição antes de publicar).",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/audio2.ogg"
+          }
+        },
+        {
+          "id": "ask_delivery",
+          "type": "action",
+          "label": "Consentimento para enviar PDFs",
+          "position": {
+            "x": 340,
+            "y": 380
+          },
+          "config": {
+            "mode": "text",
+            "body": "O pacote principal em PDF é enviado primeiro. A contribuição é opcional; os bônus extras têm condições próprias, que explico antes da decisão. Quer que eu envie o material principal agora?"
+          }
+        },
+        {
+          "id": "reply_delivery",
+          "type": "match_reply",
+          "label": "Resposta ao convite dos PDFs",
+          "position": {
+            "x": 680,
+            "y": 380
+          },
+          "config": {
+            "grace_timeout_ms": 1200000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "yes",
+                "label": "Sim",
+                "op": "contains",
+                "pattern": "sim"
+              },
+              {
+                "id": "want",
+                "label": "Quero",
+                "op": "contains",
+                "pattern": "quero"
+              },
+              {
+                "id": "can",
+                "label": "Pode",
+                "op": "contains",
+                "pattern": "pode"
+              },
+              {
+                "id": "no",
+                "label": "Não",
+                "op": "eq",
+                "pattern": "não"
+              }
+            ]
+          }
+        },
+        {
+          "id": "reminder2",
+          "type": "action",
+          "label": "Follow-up de entrega — único",
+          "position": {
+            "x": 1020,
+            "y": 380
+          },
+          "config": {
+            "mode": "text",
+            "body": "Se ainda quiser receber o material principal, responda QUERO. Se não quiser continuar, sem problema."
+          }
+        },
+        {
+          "id": "pdf",
+          "type": "action",
+          "label": "PDF principal — anexar",
+          "position": {
+            "x": 1360,
+            "y": 380
+          },
+          "config": {
+            "mode": "text",
+            "body": "[ANEXAR os Materiais em PDF. O arquivo principal precisa ser adicionado antes de publicar.]"
+          }
+        },
+        {
+          "id": "thanks",
+          "type": "action",
+          "label": "Confirmação da entrega",
+          "position": {
+            "x": 0,
+            "y": 570
+          },
+          "config": {
+            "mode": "text",
+            "body": "Prontinho, os PDFs principais já estão com você. Espero que ajudem nos hinos! 😍"
+          }
+        },
+        {
+          "id": "audio3_new",
+          "type": "action",
+          "label": "Áudio 03 original — mock; revisar antes de publicar",
+          "position": {
+            "x": 340,
+            "y": 570
+          },
+          "config": {
+            "mode": "text",
+            "body": "Áudio original de contribuição (mock para revisão; contém cobrança moral/religiosa).",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/audio3.ogg"
+          }
+        },
+        {
+          "id": "contribution",
+          "type": "action",
+          "label": "Contribuição opcional",
+          "position": {
+            "x": 680,
+            "y": 570
+          },
+          "config": {
+            "mode": "text",
+            "body": "Se quiser contribuir, estas são sugestões: R$ 15, R$ 20, R$ 30 ou R$ 50. Você pode escolher outro valor ou não contribuir. Os PDFs principais continuam com você. Para receber bônus/grupo, confira a condição informada antes de decidir. Chave Pix: 00000000000, em nome de Responsável Exemplo (marido da Equipe Exemplo)."
+          }
+        },
+        {
+          "id": "reply_material",
+          "type": "match_reply",
+          "label": "Resposta após entrega",
+          "position": {
+            "x": 1020,
+            "y": 570
+          },
+          "config": {
+            "grace_timeout_ms": 86400000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "pix",
+                "label": "Quer contribuir",
+                "op": "contains",
+                "pattern": "pix"
+              },
+              {
+                "id": "contribute",
+                "label": "Contribuir",
+                "op": "contains",
+                "pattern": "contribuir"
+              },
+              {
+                "id": "upsell",
+                "label": "Interesse em aulas",
+                "op": "contains",
+                "pattern": "aula"
+              },
+              {
+                "id": "like",
+                "label": "Gostou",
+                "op": "contains",
+                "pattern": "gostei"
+              }
+            ]
+          }
+        },
+        {
+          "id": "checkin",
+          "type": "action",
+          "label": "Checagem de suporte — 24 horas",
+          "position": {
+            "x": 1360,
+            "y": 570
+          },
+          "config": {
+            "mode": "text",
+            "body": "Oii, {{nome}}! Conseguiu abrir os PDFs? Se algum arquivo não funcionar, me diga qual e eu te ajudo."
+          }
+        },
+        {
+          "id": "main_pix",
+          "type": "action",
+          "label": "Dados Pix — contribuição",
+          "position": {
+            "x": 0,
+            "y": 760
+          },
+          "config": {
+            "mode": "text",
+            "body": "Se decidiu contribuir, pode fazer o Pix pela chave 00000000000, em nome de Responsável Exemplo. Para receber bônus vinculados à contribuição, envie o comprovante para conferência. Sem contribuição, os PDFs principais continuam com você."
+          }
+        },
+        {
+          "id": "reply_main_pix",
+          "type": "match_reply",
+          "label": "Retorno do Pix opcional",
+          "position": {
+            "x": 340,
+            "y": 760
+          },
+          "config": {
+            "grace_timeout_ms": 3600000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "paid",
+                "label": "Comprovante",
+                "op": "contains",
+                "pattern": "comprovante"
+              },
+              {
+                "id": "paid2",
+                "label": "Já paguei",
+                "op": "contains",
+                "pattern": "paguei"
+              }
+            ]
+          }
+        },
+        {
+          "id": "main_pix_nudge",
+          "type": "action",
+          "label": "Follow-up Pix — único",
+          "position": {
+            "x": 680,
+            "y": 760
+          },
+          "config": {
+            "mode": "text",
+            "body": "Oi, {{nome}}! Só confirmando se ainda quer contribuir. Se mudou de ideia, tudo bem; não vou insistir. Os PDFs principais continuam com você."
+          }
+        },
+        {
+          "id": "proof_ack",
+          "type": "action",
+          "label": "Comprovante recebido",
+          "position": {
+            "x": 1020,
+            "y": 760
+          },
+          "config": {
+            "mode": "text",
+            "body": "Recebi sua mensagem. Vou encaminhar para conferência humana antes de liberar os bônus, tudo bem?"
+          }
+        },
+        {
+          "id": "proof_task",
+          "type": "internal_task",
+          "label": "Conferir comprovante",
+          "position": {
+            "x": 1360,
+            "y": 760
+          },
+          "config": {
+            "titulo": "Conferir contribuição Pix e liberar bônus se confirmada — {{contact.name}}",
+            "vence_em_dias": 0,
+            "atribuir_a": "dono_do_lead",
+            "prioridade": "high"
+          }
+        },
+        {
+          "id": "upsell_intro",
+          "type": "action",
+          "label": "Convite opcional ao upsell",
+          "position": {
+            "x": 0,
+            "y": 950
+          },
+          "config": {
+            "mode": "text",
+            "body": "Que bom que recebeu o material! Há um pacote opcional com 30 videoaulas de hinos gospel por R$ 15 em pagamento único. Quer ver uma demonstração antes de decidir? O acesso é enviado após a confirmação do pagamento."
+          }
+        },
+        {
+          "id": "reply_demo",
+          "type": "match_reply",
+          "label": "Interesse na demonstração",
+          "position": {
+            "x": 340,
+            "y": 950
+          },
+          "config": {
+            "grace_timeout_ms": 1200000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "yes",
+                "label": "Sim",
+                "op": "contains",
+                "pattern": "sim"
+              },
+              {
+                "id": "want",
+                "label": "Quero ver",
+                "op": "contains",
+                "pattern": "quero"
+              },
+              {
+                "id": "no",
+                "label": "Não",
+                "op": "eq",
+                "pattern": "não"
+              }
+            ]
+          }
+        },
+        {
+          "id": "audio4",
+          "type": "action",
+          "label": "Áudio 04 original — mock; revisar antes de publicar",
+          "position": {
+            "x": 680,
+            "y": 950
+          },
+          "config": {
+            "mode": "text",
+            "body": "Áudio original do upsell (mock para revisão; validar alegação de compra e atualização semanal antes de publicar).",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/audio4.ogg"
+          }
+        },
+        {
+          "id": "pause_demo",
+          "type": "wait",
+          "label": "Pausa entre mídias — 5 segundos",
+          "position": {
+            "x": 1020,
+            "y": 950
+          },
+          "config": {
+            "mode": "fixed",
+            "duration_ms": 5000
+          }
+        },
+        {
+          "id": "video2",
+          "type": "action",
+          "label": "Vídeo 02 — mock",
+          "position": {
+            "x": 1360,
+            "y": 950
+          },
+          "config": {
+            "mode": "text",
+            "body": "Demonstra teclado físico e notas na tela; sem fala identificável.",
+            "media_url": "https://storage.example.invalid/storage/v1/object/public/deskcomm-flow-mock/cifras-gospel/mock/video2.mp4"
+          }
+        },
+        {
+          "id": "upsell_terms",
+          "type": "action",
+          "label": "Termos do pacote extra",
+          "position": {
+            "x": 0,
+            "y": 1140
+          },
+          "config": {
+            "mode": "text",
+            "body": "O pacote completo custa R$ 15, pagamento único, e inclui 30 videoaulas. [Confirmar por quanto tempo fica o acesso e se são adicionadas 20 músicas novas toda semana.] O link é enviado após confirmar o pagamento. Quer comprar?"
+          }
+        },
+        {
+          "id": "reply_buy",
+          "type": "match_reply",
+          "label": "Decisão do upsell",
+          "position": {
+            "x": 340,
+            "y": 1140
+          },
+          "config": {
+            "grace_timeout_ms": 1800000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "yes",
+                "label": "Sim",
+                "op": "contains",
+                "pattern": "sim"
+              },
+              {
+                "id": "want",
+                "label": "Quero comprar",
+                "op": "contains",
+                "pattern": "quero"
+              },
+              {
+                "id": "no",
+                "label": "Não",
+                "op": "eq",
+                "pattern": "não"
+              }
+            ]
+          }
+        },
+        {
+          "id": "upsell_pix",
+          "type": "action",
+          "label": "Pix do upsell",
+          "position": {
+            "x": 680,
+            "y": 1140
+          },
+          "config": {
+            "mode": "text",
+            "body": "Para comprar o pacote de videoaulas por R$ 15 (pagamento único), faça o Pix para a chave 00000000000, em nome de Responsável Exemplo. Envie o comprovante; a equipe confirma o pagamento e libera o link."
+          }
+        },
+        {
+          "id": "reply_upsell_pix",
+          "type": "match_reply",
+          "label": "Confirmação do pagamento do upsell",
+          "position": {
+            "x": 1020,
+            "y": 1140
+          },
+          "config": {
+            "grace_timeout_ms": 3600000,
+            "branches": [
+              {
+                "id": "human",
+                "label": "Humano",
+                "op": "contains",
+                "pattern": "humano"
+              },
+              {
+                "id": "staff",
+                "label": "Atendente",
+                "op": "contains",
+                "pattern": "atendente"
+              },
+              {
+                "id": "stop",
+                "label": "Parar",
+                "op": "contains",
+                "pattern": "parar"
+              },
+              {
+                "id": "stop_req",
+                "label": "Não enviar",
+                "op": "contains",
+                "pattern": "não me mande"
+              },
+              {
+                "id": "paid",
+                "label": "Comprovante",
+                "op": "contains",
+                "pattern": "comprovante"
+              },
+              {
+                "id": "paid2",
+                "label": "Paguei",
+                "op": "contains",
+                "pattern": "paguei"
+              }
+            ]
+          }
+        },
+        {
+          "id": "upsell_nudge",
+          "type": "action",
+          "label": "Follow-up do upsell — único",
+          "position": {
+            "x": 1360,
+            "y": 1140
+          },
+          "config": {
+            "mode": "text",
+            "body": "Oi, {{nome}}! Quer que eu mantenha a oferta das videoaulas para você? Se não quiser, tudo bem; encerro por aqui."
+          }
+        },
+        {
+          "id": "upsell_proof_ack",
+          "type": "action",
+          "label": "Comprovante do upsell recebido",
+          "position": {
+            "x": 0,
+            "y": 1330
+          },
+          "config": {
+            "mode": "text",
+            "body": "Recebi sua mensagem. Vou pedir à equipe para conferir o pagamento; o link será enviado depois da confirmação."
+          }
+        },
+        {
+          "id": "upsell_task",
+          "type": "internal_task",
+          "label": "Conferir pagamento upsell",
+          "position": {
+            "x": 340,
+            "y": 1330
+          },
+          "config": {
+            "titulo": "Conferir pagamento do pacote de videoaulas e liberar acesso — {{contact.name}}",
+            "vence_em_dias": 0,
+            "atribuir_a": "dono_do_lead",
+            "prioridade": "high"
+          }
+        },
+        {
+          "id": "human_ack",
+          "type": "action",
+          "label": "Passagem para pessoa",
+          "position": {
+            "x": 680,
+            "y": 1330
+          },
+          "config": {
+            "mode": "text",
+            "body": "Claro! Vou encaminhar sua conversa para uma pessoa da equipe. A automação vai parar por aqui; você não precisa repetir o que já explicou."
+          }
+        },
+        {
+          "id": "human_task",
+          "type": "internal_task",
+          "label": "Atender pedido humano",
+          "position": {
+            "x": 1020,
+            "y": 1330
+          },
+          "config": {
+            "titulo": "Cliente pediu atendimento humano — {{contact.name}}",
+            "vence_em_dias": 0,
+            "atribuir_a": "dono_do_lead",
+            "prioridade": "high"
+          }
+        },
+        {
+          "id": "stop_ack",
+          "type": "action",
+          "label": "Confirmação de parada",
+          "position": {
+            "x": 1360,
+            "y": 1330
+          },
+          "config": {
+            "mode": "text",
+            "body": "Entendido. Vou parar as mensagens automáticas e cancelar os lembretes. Se você iniciar uma nova conversa, a equipe poderá ajudar."
+          }
+        },
+        {
+          "id": "decline",
+          "type": "action",
+          "label": "Encerrar oferta com respeito",
+          "position": {
+            "x": 0,
+            "y": 1520
+          },
+          "config": {
+            "mode": "text",
+            "body": "Sem problema, {{nome}}. Obrigada por avisar. Não vou insistir nessa oferta. Se precisar de ajuda com os PDFs que recebeu, pode me chamar."
+          }
+        },
+        {
+          "id": "end_human",
+          "type": "end",
+          "label": "Fim — aguarda humano",
+          "position": {
+            "x": 340,
+            "y": 1520
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Conversa encaminhada; não retomar automaticamente."
+          }
+        },
+        {
+          "id": "end_stop",
+          "type": "end",
+          "label": "Fim — opt-out",
+          "position": {
+            "x": 680,
+            "y": 1520
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Mensagens interrompidas a pedido da pessoa."
+          }
+        },
+        {
+          "id": "end_decline",
+          "type": "end",
+          "label": "Fim — oferta recusada",
+          "position": {
+            "x": 1020,
+            "y": 1520
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Oferta encerrada sem novos lembretes."
+          }
+        },
+        {
+          "id": "end_timeout",
+          "type": "end",
+          "label": "Fim — sem resposta",
+          "position": {
+            "x": 1360,
+            "y": 1520
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Um follow-up foi feito; aguardar nova mensagem."
+          }
+        },
+        {
+          "id": "end_material",
+          "type": "end",
+          "label": "Fim — material enviado",
+          "position": {
+            "x": 0,
+            "y": 1710
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "PDF principal entregue; aguardar resposta."
+          }
+        },
+        {
+          "id": "end_payment",
+          "type": "end",
+          "label": "Fim — comprovante em revisão",
+          "position": {
+            "x": 340,
+            "y": 1710
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Equipe valida pagamento e envia bônus/acesso."
+          }
+        },
+        {
+          "id": "end_upsell",
+          "type": "end",
+          "label": "Fim — upsell recusado",
+          "position": {
+            "x": 680,
+            "y": 1710
+          },
+          "config": {
+            "outcome": "exhausted",
+            "note": "Upsell encerrado sem insistência."
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "start",
+          "target": "welcome",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e2",
+          "source": "welcome",
+          "target": "pause1",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e3",
+          "source": "pause1",
+          "target": "audio1",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e4",
+          "source": "audio1",
+          "target": "ask_level",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e5",
+          "source": "ask_level",
+          "target": "reply_start",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e6",
+          "source": "video_intro",
+          "target": "video1",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e7",
+          "source": "video1",
+          "target": "offer_list",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e8",
+          "source": "offer_list",
+          "target": "audio2",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e9",
+          "source": "audio2",
+          "target": "ask_delivery",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e10",
+          "source": "pdf",
+          "target": "thanks",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e11",
+          "source": "thanks",
+          "target": "audio3_new",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e12",
+          "source": "audio3_new",
+          "target": "contribution",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e13",
+          "source": "contribution",
+          "target": "reply_material",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e14",
+          "source": "main_pix",
+          "target": "reply_main_pix",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e15",
+          "source": "proof_ack",
+          "target": "proof_task",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e16",
+          "source": "upsell_intro",
+          "target": "reply_demo",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e17",
+          "source": "audio4",
+          "target": "pause_demo",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e18",
+          "source": "pause_demo",
+          "target": "video2",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e19",
+          "source": "video2",
+          "target": "upsell_terms",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e20",
+          "source": "upsell_terms",
+          "target": "reply_buy",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e21",
+          "source": "upsell_pix",
+          "target": "reply_upsell_pix",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e22",
+          "source": "upsell_proof_ack",
+          "target": "upsell_task",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e23",
+          "source": "human_ack",
+          "target": "human_task",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e24",
+          "source": "stop_ack",
+          "target": "end_stop",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e25",
+          "source": "decline",
+          "target": "end_decline",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e26",
+          "source": "proof_task",
+          "target": "end_payment",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e27",
+          "source": "upsell_task",
+          "target": "end_payment",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e28",
+          "source": "checkin",
+          "target": "end_material",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e29",
+          "source": "reminder1",
+          "target": "end_timeout",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e30",
+          "source": "reminder2",
+          "target": "end_timeout",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e31",
+          "source": "main_pix_nudge",
+          "target": "end_timeout",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e32",
+          "source": "upsell_nudge",
+          "target": "end_timeout",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e33",
+          "source": "reply_start",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e34",
+          "source": "reply_start",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e35",
+          "source": "reply_start",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e36",
+          "source": "reply_start",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e37",
+          "source": "reply_start",
+          "target": "video_intro",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "yes"
+          }
+        },
+        {
+          "id": "e38",
+          "source": "reply_start",
+          "target": "video_intro",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "want"
+          }
+        },
+        {
+          "id": "e39",
+          "source": "reply_start",
+          "target": "video_intro",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "can"
+          }
+        },
+        {
+          "id": "e40",
+          "source": "reply_start",
+          "target": "decline",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no"
+          }
+        },
+        {
+          "id": "e41",
+          "source": "reply_start",
+          "target": "reminder1",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e42",
+          "source": "reply_start",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e43",
+          "source": "reply_delivery",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e44",
+          "source": "reply_delivery",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e45",
+          "source": "reply_delivery",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e46",
+          "source": "reply_delivery",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e47",
+          "source": "reply_delivery",
+          "target": "pdf",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "yes"
+          }
+        },
+        {
+          "id": "e48",
+          "source": "reply_delivery",
+          "target": "pdf",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "want"
+          }
+        },
+        {
+          "id": "e49",
+          "source": "reply_delivery",
+          "target": "pdf",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "can"
+          }
+        },
+        {
+          "id": "e50",
+          "source": "reply_delivery",
+          "target": "decline",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no"
+          }
+        },
+        {
+          "id": "e51",
+          "source": "reply_delivery",
+          "target": "reminder2",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e52",
+          "source": "reply_delivery",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e53",
+          "source": "reply_material",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e54",
+          "source": "reply_material",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e55",
+          "source": "reply_material",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e56",
+          "source": "reply_material",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e57",
+          "source": "reply_material",
+          "target": "main_pix",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "pix"
+          }
+        },
+        {
+          "id": "e58",
+          "source": "reply_material",
+          "target": "main_pix",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "contribute"
+          }
+        },
+        {
+          "id": "e59",
+          "source": "reply_material",
+          "target": "upsell_intro",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "upsell"
+          }
+        },
+        {
+          "id": "e60",
+          "source": "reply_material",
+          "target": "upsell_intro",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "like"
+          }
+        },
+        {
+          "id": "e61",
+          "source": "reply_material",
+          "target": "decline",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no"
+          }
+        },
+        {
+          "id": "e62",
+          "source": "reply_material",
+          "target": "checkin",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e63",
+          "source": "reply_material",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e64",
+          "source": "reply_main_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e65",
+          "source": "reply_main_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e66",
+          "source": "reply_main_pix",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e67",
+          "source": "reply_main_pix",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e68",
+          "source": "reply_main_pix",
+          "target": "proof_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "paid"
+          }
+        },
+        {
+          "id": "e69",
+          "source": "reply_main_pix",
+          "target": "proof_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "paid2"
+          }
+        },
+        {
+          "id": "e70",
+          "source": "reply_main_pix",
+          "target": "main_pix_nudge",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e71",
+          "source": "reply_main_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e72",
+          "source": "reply_demo",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e73",
+          "source": "reply_demo",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e74",
+          "source": "reply_demo",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e75",
+          "source": "reply_demo",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e76",
+          "source": "reply_demo",
+          "target": "audio4",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "yes"
+          }
+        },
+        {
+          "id": "e77",
+          "source": "reply_demo",
+          "target": "audio4",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "want"
+          }
+        },
+        {
+          "id": "e78",
+          "source": "reply_demo",
+          "target": "decline",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no"
+          }
+        },
+        {
+          "id": "e79",
+          "source": "reply_demo",
+          "target": "end_upsell",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e80",
+          "source": "reply_demo",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e81",
+          "source": "reply_buy",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e82",
+          "source": "reply_buy",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e83",
+          "source": "reply_buy",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e84",
+          "source": "reply_buy",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e85",
+          "source": "reply_buy",
+          "target": "upsell_pix",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "yes"
+          }
+        },
+        {
+          "id": "e86",
+          "source": "reply_buy",
+          "target": "upsell_pix",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "want"
+          }
+        },
+        {
+          "id": "e87",
+          "source": "reply_buy",
+          "target": "decline",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no"
+          }
+        },
+        {
+          "id": "e88",
+          "source": "reply_buy",
+          "target": "end_upsell",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e89",
+          "source": "reply_buy",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        },
+        {
+          "id": "e90",
+          "source": "reply_upsell_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "human"
+          }
+        },
+        {
+          "id": "e91",
+          "source": "reply_upsell_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "staff"
+          }
+        },
+        {
+          "id": "e92",
+          "source": "reply_upsell_pix",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop"
+          }
+        },
+        {
+          "id": "e93",
+          "source": "reply_upsell_pix",
+          "target": "stop_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "stop_req"
+          }
+        },
+        {
+          "id": "e94",
+          "source": "reply_upsell_pix",
+          "target": "upsell_proof_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "paid"
+          }
+        },
+        {
+          "id": "e95",
+          "source": "reply_upsell_pix",
+          "target": "upsell_proof_ack",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "paid2"
+          }
+        },
+        {
+          "id": "e96",
+          "source": "reply_upsell_pix",
+          "target": "upsell_nudge",
+          "priority": 0,
+          "condition": {
+            "type": "branch",
+            "branch_id": "no_reply"
+          }
+        },
+        {
+          "id": "e97",
+          "source": "reply_upsell_pix",
+          "target": "human_ack",
+          "priority": 0,
+          "condition": {
+            "type": "always"
+          }
+        }
+      ]
+    }
+  }
+}

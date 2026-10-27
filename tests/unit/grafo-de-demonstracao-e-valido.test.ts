@@ -17,8 +17,7 @@ import { GRAFO_DE_DEMONSTRACAO, NO_ESPERA } from "../../scripts/lib/grafo-de-dem
  *
  * As armadilhas são reais e nenhuma é adivinhável:
  *   • quase todo nó é `strictObject`, então UMA chave a mais reprova;
- *   • `waitConfigSchema` tem piso de 300.000 ms (5 min) — um `duration_ms` de
- *     "30 segundos" para a demo ir rápido seria recusado;
+ *   • `waitConfigSchema` tem piso de 5.000 ms (5 s);
  *   • `end` exige `outcome` de um enum fechado.
  *
  * Este teste roda o schema DE VERDADE, o mesmo que a API usa em
@@ -43,10 +42,10 @@ describe("grafo de demonstração do follow-up", () => {
     const esperaCurta = flowGraphSchema.safeParse({
       ...GRAFO_DE_DEMONSTRACAO,
       nodes: GRAFO_DE_DEMONSTRACAO.nodes.map((n) =>
-        n.id === NO_ESPERA ? { ...n, config: { mode: "fixed", duration_ms: 30_000 } } : n,
+        n.id === NO_ESPERA ? { ...n, config: { mode: "fixed", duration_ms: 4_000 } } : n,
       ),
     });
-    expect(esperaCurta.success, "30s está abaixo do piso de 300.000 ms").toBe(false);
+    expect(esperaCurta.success, "4s está abaixo do piso de 5.000 ms").toBe(false);
   });
 
   it("o construtor PUBLICARIA este grafo", () => {

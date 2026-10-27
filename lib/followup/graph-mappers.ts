@@ -89,6 +89,8 @@ export function toFlowNode(n: RFNode): FlowNode {
       return { ...shared, type, config: n.data.config as ConfigOf<"conversion_pixel"> };
     case "carousel":
       return { ...shared, type, config: n.data.config as ConfigOf<"carousel"> };
+    case "random_split":
+      return { ...shared, type, config: n.data.config as ConfigOf<"random_split"> };
     case "end":
       return { ...shared, type, config: n.data.config as ConfigOf<"end"> };
     case "collect":

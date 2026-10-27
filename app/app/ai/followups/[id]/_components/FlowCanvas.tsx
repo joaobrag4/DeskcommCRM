@@ -74,6 +74,7 @@ import { InteractiveMenuNode } from "./nodes/InteractiveMenuNode";
 import { FlowConnectionNode } from "./nodes/FlowConnectionNode";
 import { ConversionPixelNode } from "./nodes/ConversionPixelNode";
 import { CarouselNode } from "./nodes/CarouselNode";
+import { RandomSplitNode } from "./nodes/RandomSplitNode";
 
 const EMPTY_GRAPH: FlowGraph = { nodes: [], edges: [] };
 const DND_MIME = "application/x-followup-node-type";
@@ -107,6 +108,7 @@ const nodeTypes: NodeTypes = {
   flow_connection: FlowConnectionNode,
   conversion_pixel: ConversionPixelNode,
   carousel: CarouselNode,
+  random_split: RandomSplitNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,

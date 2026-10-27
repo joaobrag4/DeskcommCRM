@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "fluxo",
+  "meta": {
+    "titulo": "Prévia local dos fluxos",
+    "pergunta": "Como testar o rascunho e localizar cada decisão sem enviar mensagens?",
+    "resumo": "O editor alimenta uma sessão determinística transitória. As mesmas decisões puras do motor geram conversa e percurso no canvas. O histórico devolve o operador ao nó que precisa de correção."
+  },
+  "lanes": [
+    { "id": "editor", "label": "Editor" },
+    { "id": "decisao", "label": "Decisões locais" },
+    { "id": "resultado", "label": "Conversa e diagnóstico" }
+  ],
+  "mainPath": ["rascunho", "sessao", "handlers", "conversa"],
+  "nodes": [
+    { "id": "rascunho", "lane": "editor", "col": 1, "type": "frontend", "label": "FlowCanvas.liveGraph", "sublabel": "Inclui alterações não salvas; nunca recebe a decoração transitória" },
+    { "id": "porta", "lane": "editor", "col": 1, "type": "frontend", "label": "PublishBar · Prévia", "sublabel": "Carrega o painel sob demanda" },
+    { "id": "sessao", "lane": "decisao", "col": 2, "type": "regra", "label": "preview/session.ts", "sublabel": "Snapshot, relógio virtual e limites do ensaio" },
+    { "id": "handlers", "lane": "decisao", "col": 3, "type": "regra", "label": "processNode / selectEdge", "sublabel": "Handlers puros e renderizador de variáveis compartilhados" },
+    { "id": "conversa", "lane": "resultado", "col": 4, "type": "frontend", "label": "FlowPreview", "sublabel": "Mensagens, mídias manuais, tarefas simuladas e histórico" },
+    { "id": "canvas", "lane": "resultado", "col": 3, "type": "frontend", "label": "canvas-feedback.ts", "sublabel": "Etapa atual, estados e arestas percorridas, só no render" }
+  ],
+  "edges": [
+    { "id": "a1", "from": "porta", "to": "sessao", "label": "Iniciar cria uma sessão local" },
+    { "id": "a2", "from": "rascunho", "to": "sessao", "label": "Cópia do rascunho; reinício lê a edição mais recente" },
+    { "id": "a3", "from": "sessao", "to": "handlers", "label": "Cada passo decide sem banco nem fila" },
+    { "id": "a4", "from": "handlers", "to": "conversa", "label": "Resultado vira mensagem ou efeito explicitamente simulado" },
+    { "id": "a5", "from": "sessao", "to": "canvas", "label": "Nó atual e histórico exato das conexões" },
+    { "id": "a6", "from": "conversa", "to": "rascunho", "label": "Localizar e editar etapa fecha o laço de correção" },
+    { "id": "a7", "from": "conversa", "to": "sessao", "label": "Responder, pausar, avançar prazo, reiniciar ou encerrar" }
+  ],
+  "cards": [
+    { "titulo": "Isolamento", "texto": "Nenhum envio, contato, inscrição, tarefa persistida, pagamento ou chamada a modelo. A trilha existe somente em memória e termina ao fechar o painel." },
+    { "titulo": "Limites visíveis", "texto": "Tipos ou modos não suportados e ciclos terminam com diagnóstico. Tarefa simulada de conferir Pix não comprova recebimento; saída de humano não altera atribuição real." }
+  ]
+}

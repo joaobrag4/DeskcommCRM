@@ -30,6 +30,7 @@ import { InteractiveMenuForm } from "./forms/InteractiveMenuForm";
 import { FlowConnectionForm } from "./forms/FlowConnectionForm";
 import { ConversionPixelForm } from "./forms/ConversionPixelForm";
 import { CarouselForm } from "./forms/CarouselForm";
+import { RandomSplitForm } from "./forms/RandomSplitForm";
 import type { ConfigOf } from "./forms/shared";
 import { NODE_VISUALS } from "./nodes/nodeVisuals";
 
@@ -203,6 +204,12 @@ export function NodeConfigPanel({
         {type === "carousel" && (
           <CarouselForm
             config={node.data.config as ConfigOf<"carousel">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "random_split" && (
+          <RandomSplitForm
+            config={node.data.config as ConfigOf<"random_split">}
             onChange={(config) => onChange({ config })}
           />
         )}

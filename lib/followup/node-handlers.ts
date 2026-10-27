@@ -1060,6 +1060,33 @@ export function processNode(input: {
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 
+    case "random_split": {
+      const paths = node.config.paths ?? [];
+      if (paths.length === 0) {
+        return { kind: "fail", error: `random_split node "${node.id}" has no paths configured` };
+      }
+      const totalWeight = paths.reduce((acc, p) => acc + p.weight, 0);
+      let roll = Math.random() * (totalWeight > 0 ? totalWeight : 1);
+      let chosen = paths[0]!;
+      for (const p of paths) {
+        if (roll < p.weight) {
+          chosen = p;
+          break;
+        }
+        roll -= p.weight;
+      }
+      const edge =
+        selectEdge(edges, node.id, { type: "branch", branch_id: chosen.id }) ??
+        selectEdge(edges, node.id, { type: "always" });
+      if (!edge) {
+        return {
+          kind: "fail",
+          error: `random_split node "${node.id}" has no outbound edge for chosen path "${chosen.id}"`,
+        };
+      }
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
     case "end": {
       if (node.config.outcome === "custom") {
         return { kind: "complete", outcome: null, cancel_reason: node.config.note };

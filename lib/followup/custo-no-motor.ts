@@ -38,6 +38,7 @@ export const CUSTO_NO_MOTOR: Record<NodeType, number> = {
   http_request: 1,
   flow_connection: 1,
   conversion_pixel: 1,
+  random_split: 1,
   end: 1,
   // Dois ticks: arma e fecha.
   wait: 2,

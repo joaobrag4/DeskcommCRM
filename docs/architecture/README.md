@@ -15,6 +15,7 @@ ser fonte sem ninguém decidir isso.
 ## Mapas
 
 | arquivo | escopo |
+| `followup-previa-local.architecture.json` | ensaio local do rascunho: conversa, relógio virtual, percurso no canvas e retorno à etapa para correção, sem efeitos operacionais |
 | `etiquetas-paginadas.architecture.json` | vocabulário paginado, busca e sugestões nos editores do Inbox |
 |---|---|
 | `nomes-internos-das-conexoes.architecture.json` | renomeação interna dos canais — cartões de WhatsApp, parceiro e redes sociais → rota tenant-aware → `channel_sessions.display_name` → cartões e seletores, com auditoria e sem alterar o nome público no provedor |

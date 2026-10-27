@@ -19,6 +19,7 @@ import {
   FlowArrow,
   Megaphone,
   ImageSquare,
+  Shuffle,
 } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
@@ -291,6 +292,20 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
       ],
     }),
   },
+  random_split: {
+    type: "random_split",
+    paletteLabel: "Distribuidor",
+    icon: Shuffle,
+    chipClassName: "bg-warning-bg text-warning-fg",
+    borderClassName: "border-l-warning",
+    defaultLabel: "Distribuir fluxo",
+    defaultConfig: () => ({
+      paths: [
+        { id: "path_a", label: "Caminho A", weight: 50 },
+        { id: "path_b", label: "Caminho B", weight: 50 },
+      ],
+    }),
+  },
   end: {
     type: "end",
     paletteLabel: "Fim",
@@ -425,6 +440,11 @@ export function describeNodeConfig(
       const c = config as ConfigOf<"carousel">;
       const cards = c.cards?.length ?? 0;
       return `${cards} ${cards === 1 ? t("cartão") : t("cartões")}`;
+    }
+    case "random_split": {
+      const c = config as ConfigOf<"random_split">;
+      const paths = c.paths?.length ?? 0;
+      return `${paths} ${paths === 1 ? t("caminho") : t("caminhos")} · ${t("sorteio percentual")}`;
     }
     case "end": {
       const c = config as ConfigOf<"end">;

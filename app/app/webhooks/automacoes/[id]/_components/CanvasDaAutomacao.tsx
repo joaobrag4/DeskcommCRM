@@ -179,7 +179,7 @@ export function CanvasDaAutomacao({ regra }: Props) {
         const origem = nos.find((n) => n.id === l.source);
         return {
           ...l,
-          type: "smoothstep" as const,
+          type: "default" as const,
           label: origem?.data.kind === "condicoes" ? t("se atender") : undefined,
           selected: l.id === ligacaoSelecionada,
         };
@@ -532,8 +532,8 @@ export function CanvasDaAutomacao({ regra }: Props) {
             onPaneClick={onPaneClick}
             // Excluir passa pelo nosso caminho, que fecha a fila e nunca tira o gatilho.
             deleteKeyCode={null}
-            defaultEdgeOptions={{ type: "smoothstep" }}
-            connectionLineType={ConnectionLineType.SmoothStep}
+            defaultEdgeOptions={{ type: "default" }}
+            connectionLineType={ConnectionLineType.Bezier}
             fitView
             fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
           >

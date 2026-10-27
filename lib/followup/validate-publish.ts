@@ -287,6 +287,7 @@ export const NOS_DA_SUPERFICIE: Record<FollowupFlowSurface, readonly NodeType[]>
     'flow_connection',
     'conversion_pixel',
     'carousel',
+    'random_split',
     'end',
   ],
   crm_automation: [
@@ -305,6 +306,7 @@ export const NOS_DA_SUPERFICIE: Record<FollowupFlowSurface, readonly NodeType[]>
     'flow_connection',
     'conversion_pixel',
     'carousel',
+    'random_split',
     'end',
   ],
   atendimento: ['trigger', 'collect', 'skill', 'end'],
@@ -463,6 +465,7 @@ export const CONTA_NO_TETO: Record<NodeType, boolean> = {
   http_request: false, // webhook externo
   flow_connection: false, // transição entre fluxos
   conversion_pixel: false, // telemetria/conversão
+  random_split: false, // divisão/distribuição de tráfego
   end: false, // desfecho
 };
 
@@ -1270,6 +1273,12 @@ export function validateFlowForPublish(
         message: `Nó "${node.id}" tem grace_timeout_ms abaixo do mínimo de 15min.`,
       });
     }
+  }
+
+  for (const node of [...nodes].sort(byId)) {
+    if (node.type !== 'random_split') continue;
+    const outgoing = outEdges.get(node.id) ?? [];
+    cobrirRamos(node, outgoing, errors, nomes);
   }
 
   // cycle_without_wait — exact, not an approximation: a directed cycle with no

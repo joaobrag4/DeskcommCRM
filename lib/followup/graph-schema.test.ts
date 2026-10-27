@@ -47,6 +47,7 @@ describe('graph-schema', () => {
         'flow_connection',
         'conversion_pixel',
         'carousel',
+        'random_split',
         'end',
       ]);
     });

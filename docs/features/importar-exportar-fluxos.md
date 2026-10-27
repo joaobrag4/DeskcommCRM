@@ -25,7 +25,7 @@ gerente, o mesmo de criar fluxo.
 ## O que acontece ao importar
 
 1. **O arquivo é validado pelas MESMAS regras do editor.** Tipo de cada caixa, limites de cada
-   campo (espera mínima de 5 minutos, até 60 caixas, até 120 ligações, ligação que aponta para caixa
+   campo (espera fixa mínima de 5 segundos; fluxos cíclicos exigem uma pausa mínima de 5 minutos, até 60 caixas, até 120 ligações, ligação que aponta para caixa
    inexistente, id repetido…). Arquivo recusado não grava nada, e a tela lista cada problema com o
    caminho até o campo, por exemplo `flow.graph.nodes.3.config.duration_ms: …`.
 2. **O fluxo nasce como RASCUNHO.** Nunca é publicado na importação e não manda mensagem para
@@ -142,7 +142,7 @@ palavra-gatilho (`settings.gatilhos`) ou pelo roteador.
 | `type` | Na tela | O que faz | `config` |
 |---|---|---|---|
 | `trigger` | Gatilho / Início do fluxo | Ponto de entrada. Um por fluxo. | `{}` |
-| `wait` | Aguardar | Pausa. | Fixa: `{ "mode": "fixed", "duration_ms": 300000…7776000000 }` (5 min a 90 dias), opcional `immune_to_reply: true` (a resposta do cliente **não** encurta a espera; para cadências longas). Inteligente: `{ "mode": "smart", "min_ms", "max_ms", "guidance"? }` (a IA escolhe dentro da faixa). |
+| `wait` | Aguardar | Pausa. | Fixa: `{ "mode": "fixed", "duration_ms": 5000…7776000000 }` (5 s a 90 dias), opcional `immune_to_reply: true` (a resposta do cliente **não** encurta a espera; para cadências longas). Inteligente: `{ "mode": "smart", "min_ms", "max_ms", "guidance"? }` (a IA escolhe dentro da faixa, com mínimo de 5 min). |
 | `condition` | Condição | Decide o caminho pelo estado do lead. | `checks` (1–10 regras), `combinator` (`and`/`or`, padrão `and`), `branching` (`combined` = saídas Sim/Não; `per_check` = uma saída por regra, cada regra com `id`). |
 | `ai_classify` | Classificar (IA) | Espera a resposta e a IA escolhe uma classe. | `classes` (1–8 nomes), `grace_timeout_ms` (mínimo 15 min: prazo para responder), `target` (`last_reply`/`summary`), `hint` (dica para a IA, até 500), opcional `branches` (ids estáveis; ver [Saídas](#saídas-de-cada-caixa-ligações)). |
 | `match_reply` | Resposta (texto) | Espera a resposta e decide por texto, sem IA. | `branches` (1–8, cada uma `{ id, label, op: "eq"/"contains", pattern }`), `grace_timeout_ms` (mínimo 15 min), opcional `save_to` (`{ "kind": "contact_name" }` ou `{ "kind": "lead_custom", "key": "campo" }`) e `if_exists` (`skip`/`overwrite`/`confirm`). |

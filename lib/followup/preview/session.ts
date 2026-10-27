@@ -77,6 +77,7 @@ function unsupported(node: FlowNode): boolean {
     case "flow_connection":
     case "conversion_pixel":
     case "carousel":
+    case "random_split":
       return false;
     case "action":
       return node.config.mode !== "text";
@@ -460,6 +461,17 @@ function step(session: PreviewSession, replyBody?: string): void {
           .map((c) => `🎠 *${c.title}*\n${c.description ?? ""}${(c.buttons ?? []).map((b) => `\n[ ${b.label} ]`).join("")}`)
           .join("\n\n");
         addMessage(session, { nodeId: node.id, direction: "outbound", body: cardsBody }, "message");
+      }
+      if (node.type === "random_split") {
+        if (!active(session)) return;
+        const branchCondition = selected.condition.type === "branch" ? selected.condition.branch_id : null;
+        const chosenPath = node.config.paths?.find((p) => p.id === branchCondition);
+        const pathName = chosenPath ? `${chosenPath.label} (${chosenPath.weight}%)` : "caminho sorteado";
+        addMessage(
+          session,
+          { nodeId: node.id, direction: "system", body: `🔀 [Distribuidor] Sorteado: ${pathName}` },
+          "task",
+        );
       }
       if (
         !record(session, {

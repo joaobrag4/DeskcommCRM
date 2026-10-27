@@ -144,6 +144,7 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   flow_connection: "Conexão de fluxo",
   conversion_pixel: "Pixel de conversão",
   carousel: "Carrossel",
+  random_split: "Distribuidor",
   end: "Fim",
 };
 
@@ -239,6 +240,8 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return { ...base, resumo: `dispara evento de conversão "${node.config.event_name}" (${node.config.provider})` };
     case "carousel":
       return { ...base, resumo: `envia carrossel com ${node.config.cards?.length ?? 0} cards` };
+    case "random_split":
+      return { ...base, resumo: `distribui tráfego entre ${node.config.paths?.length ?? 0} caminhos` };
     case "end":
       return { ...base, resumo: `encerra — ${DESFECHO[node.config.outcome] ?? node.config.outcome}` };
   }

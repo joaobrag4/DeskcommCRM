@@ -159,4 +159,5 @@ export {
   ArrowsOutSimple,
   // /admin/modulos: módulo opcional com tabela própria (ADR-0002)
   Stack,
+  Shuffle,
 } from "@phosphor-icons/react/dist/ssr";

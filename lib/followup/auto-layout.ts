@@ -40,6 +40,7 @@ const TYPE_ORDER: Record<NodeType, number> = {
   condition: 2,
   ai_classify: 3,
   match_reply: 4,
+  random_split: 4.5,
   repeat: 5,
   collect: 6,
   skill: 7,

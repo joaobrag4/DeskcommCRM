@@ -36,6 +36,7 @@ export const NODE_TYPES = [
   'flow_connection',
   'conversion_pixel',
   'carousel',
+  'random_split',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -619,6 +620,27 @@ export const carouselConfigSchema = z.strictObject({
 export type CarouselConfig = z.infer<typeof carouselConfigSchema>;
 
 /**
+ * Random split path schema (for A/B testing and message variation).
+ */
+export const randomSplitPathSchema = z.strictObject({
+  id: edgeBranchIdSchema,
+  label: z.string().min(1).max(40),
+  weight: z.number().int().min(1).max(100),
+});
+export type RandomSplitPath = z.infer<typeof randomSplitPathSchema>;
+
+/**
+ * Random split node configuration (Distribuidor de tráfego / teste A/B).
+ */
+export const randomSplitConfigSchema = z.strictObject({
+  paths: z.array(randomSplitPathSchema).min(2).max(10).default([
+    { id: 'path_a', label: 'Caminho A', weight: 50 },
+    { id: 'path_b', label: 'Caminho B', weight: 50 },
+  ]),
+});
+export type RandomSplitConfig = z.infer<typeof randomSplitConfigSchema>;
+
+/**
  * Flow node schema — discriminated union based on node type.
  * Each node type has its specific config schema.
  */
@@ -807,6 +829,17 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
       y: z.number(),
     }),
     config: carouselConfigSchema,
+  }),
+  // Nó de distribuição: divisão de tráfego / teste A/B / variação de copy
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('random_split'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: randomSplitConfigSchema,
   }),
   // End node: terminal state
   z.strictObject({
@@ -1231,6 +1264,17 @@ export function nodeBranches(node: BranchableNode): FlowBranch[] {
       return branches.length > 0
         ? [...branches, fallbackBranch('Continuar')]
         : [fallbackBranch(FALLBACK_ALWAYS_LABEL)];
+    }
+
+    case 'random_split': {
+      const branches: FlowBranch[] = (node.config.paths ?? []).map((p) => ({
+        id: p.id,
+        label: `${p.label} (${p.weight}%)`,
+        check: null,
+        kind: 'match' as const,
+        condition: { type: 'branch' as const, branch_id: p.id },
+      }));
+      return branches;
     }
 
     default:
