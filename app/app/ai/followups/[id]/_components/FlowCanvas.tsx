@@ -8,6 +8,7 @@ import {
   Background,
   Controls,
   ConnectionLineType,
+  SelectionMode,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -16,6 +17,9 @@ import {
   type EdgeMouseHandler,
   type NodeMouseHandler,
   type NodeTypes,
+  type OnBeforeDelete,
+  type OnNodesDelete,
+  type OnEdgesDelete,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./preview/preview-canvas.css";
@@ -318,11 +322,13 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
 
   const deleteNode = useCallback(
     (id: string) => {
+      const target = nodes.find((n) => n.id === id);
+      if (target?.type === "trigger") return;
       setNodes((nds) => semNo(nds, id));
       setEdges((eds) => semArestasDoNo(eds, id));
       setSelectedNodeId((cur) => (cur === id ? null : cur));
     },
-    [setNodes, setEdges],
+    [nodes, setNodes, setEdges],
   );
 
   const deleteEdge = useCallback(
@@ -333,10 +339,75 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
     [setEdges],
   );
 
+  const onBeforeDelete: OnBeforeDelete<RFNode, RFEdge> = useCallback(
+    async ({ nodes: nodesToDelete, edges: edgesToDelete }) => {
+      // O nó de gatilho nunca pode ser excluído
+      const filtrados = nodesToDelete.filter((n) => n.type !== "trigger");
+      return {
+        nodes: filtrados,
+        edges: edgesToDelete,
+      };
+    },
+    [],
+  );
+
+  const onNodesDelete: OnNodesDelete<RFNode> = useCallback(
+    (deletedNodes) => {
+      const deletedIds = new Set(deletedNodes.map((n) => n.id));
+      setEdges((eds) =>
+        eds.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target)),
+      );
+      setSelectedNodeId((cur) => (cur && deletedIds.has(cur) ? null : cur));
+    },
+    [setEdges],
+  );
+
+  const onEdgesDelete: OnEdgesDelete<RFEdge> = useCallback(
+    (deletedEdges) => {
+      const deletedIds = new Set(deletedEdges.map((e) => e.id));
+      setSelectedEdgeId((cur) => (cur && deletedIds.has(cur) ? null : cur));
+    },
+    [],
+  );
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selNodes, edges: selEdges }: { nodes: RFNode[]; edges: RFEdge[] }) => {
+      if (selNodes.length > 1) {
+        setSelectedNodeId(null);
+      }
+      if (selEdges.length > 1) {
+        setSelectedEdgeId(null);
+      }
+    },
+    [],
+  );
+
   const onDeleteSelection = useCallback(() => {
-    if (selectedNodeId) deleteNode(selectedNodeId);
-    else if (selectedEdgeId) deleteEdge(selectedEdgeId);
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge]);
+    const selectedNodes = nodes.filter((n) => n.selected && n.type !== "trigger");
+    const selectedEdges = edges.filter((e) => e.selected);
+    if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+      const nodeIds = new Set(selectedNodes.map((n) => n.id));
+      if (selectedNodeId) {
+        const single = nodes.find((n) => n.id === selectedNodeId);
+        if (single && single.type !== "trigger") nodeIds.add(selectedNodeId);
+      }
+      const edgeIds = new Set(selectedEdges.map((e) => e.id));
+      if (selectedEdgeId) edgeIds.add(selectedEdgeId);
+
+      setNodes((nds) => nds.filter((n) => !nodeIds.has(n.id)));
+      setEdges((eds) =>
+        eds.filter(
+          (e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target),
+        ),
+      );
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
+    } else if (selectedNodeId) {
+      deleteNode(selectedNodeId);
+    } else if (selectedEdgeId) {
+      deleteEdge(selectedEdgeId);
+    }
+  }, [nodes, edges, selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, setNodes, setEdges]);
 
   const onAutoFit = useCallback(() => {
     if (nodes.length === 0) return;
@@ -391,7 +462,13 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
           flow={flow}
           graph={liveGraph}
           dirty={dirty}
-          selection={selectedNode ? "node" : selectedEdge ? "edge" : null}
+          selection={
+            nodes.some((n) => n.selected && n.type !== "trigger") || (selectedNode && selectedNode.type !== "trigger")
+              ? "node"
+              : edges.some((e) => e.selected) || selectedEdge
+                ? "edge"
+                : null
+          }
           onDeleteSelection={onDeleteSelection}
           onSaved={setSavedGraph}
           onPublishErrors={markNodeErrors}
@@ -434,6 +511,12 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
           data-testid="flow-canvas"
           onDragOver={onDragOver}
           onDrop={onDrop}
+          onMouseDown={(e) => {
+            // Previne o modo de autoscroll nativo do Windows ao clicar e arrastar com a rodinha (botão do meio)
+            if (e.button === 1) {
+              e.preventDefault();
+            }
+          }}
         >
           <ReactFlow
             nodes={previewRender.nodes}
@@ -445,6 +528,16 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
+            onBeforeDelete={onBeforeDelete}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
+            onSelectionChange={onSelectionChange}
+            panOnDrag={[1, 2]}
+            selectionOnDrag={true}
+            selectionMode={SelectionMode.Partial}
+            panActivationKeyCode="Space"
+            deleteKeyCode={["Delete", "Backspace"]}
+            multiSelectionKeyCode={["Meta", "Control", "Shift"]}
             defaultEdgeOptions={{ type: "default" }}
             connectionLineType={ConnectionLineType.Bezier}
             // Enquadrar só o que já existia ao abrir. Num fluxo vazio o XYFlow

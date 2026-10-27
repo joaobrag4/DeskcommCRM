@@ -9,6 +9,7 @@ import {
   ConnectionLineType,
   Controls,
   ReactFlow,
+  SelectionMode,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -519,6 +520,11 @@ export function CanvasDaAutomacao({ regra }: Props) {
             e.dataTransfer.dropEffect = "move";
           }}
           onDrop={onDrop}
+          onMouseDown={(e) => {
+            if (e.button === 1) {
+              e.preventDefault();
+            }
+          }}
         >
           <ReactFlow
             nodes={nosNaTela}
@@ -530,6 +536,10 @@ export function CanvasDaAutomacao({ regra }: Props) {
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
+            panOnDrag={[1, 2]}
+            selectionOnDrag={true}
+            selectionMode={SelectionMode.Partial}
+            panActivationKeyCode="Space"
             // Excluir passa pelo nosso caminho, que fecha a fila e nunca tira o gatilho.
             deleteKeyCode={null}
             defaultEdgeOptions={{ type: "default" }}
