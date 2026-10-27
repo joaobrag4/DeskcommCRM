@@ -8,6 +8,7 @@ import {
   Background,
   ConnectionLineType,
   Controls,
+  MiniMap,
   ReactFlow,
   SelectionMode,
   useEdgesState,
@@ -544,11 +545,25 @@ export function CanvasDaAutomacao({ regra }: Props) {
             deleteKeyCode={null}
             defaultEdgeOptions={{ type: "default" }}
             connectionLineType={ConnectionLineType.Bezier}
+            minZoom={0.05}
+            maxZoom={2.5}
             fitView
-            fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+            fitViewOptions={{ padding: 0.2, minZoom: 0.05, maxZoom: 1 }}
           >
             <Background />
-            <Controls />
+            <Controls showFitView={true} position="bottom-left" />
+            <MiniMap
+              position="bottom-right"
+              nodeStrokeWidth={2}
+              nodeBorderRadius={6}
+              maskColor="rgba(15, 23, 42, 0.65)"
+              maskStrokeColor="var(--color-accent-500, #3b82f6)"
+              maskStrokeWidth={2}
+              pannable
+              zoomable
+              className="!hidden sm:!block !rounded-xl !border !border-border/80 !bg-card/85 !shadow-xl !backdrop-blur-md overflow-hidden"
+              style={{ width: 160, height: 100 }}
+            />
           </ReactFlow>
           <Button
             type="button"

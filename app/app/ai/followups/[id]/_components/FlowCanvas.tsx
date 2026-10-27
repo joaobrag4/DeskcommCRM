@@ -7,6 +7,7 @@ import {
   ReactFlowProvider,
   Background,
   Controls,
+  MiniMap,
   ConnectionLineType,
   SelectionMode,
   addEdge,
@@ -86,6 +87,44 @@ const FlowPreview = dynamic(() => import("./preview/FlowPreview").then((m) => m.
   ssr: false,
   loading: () => <div className="p-6" role="status">…</div>,
 });
+
+function miniMapNodeColor(node: RFNode): string {
+  switch (node.type) {
+    case "trigger":
+      return "#10b981";
+    case "wait":
+      return "#64748b";
+    case "condition":
+      return "#f59e0b";
+    case "ai_classify":
+    case "match_reply":
+      return "#8b5cf6";
+    case "repeat":
+      return "#a855f7";
+    case "action":
+      return "#3b82f6";
+    case "interactive_menu":
+      return "#06b6d4";
+    case "carousel":
+      return "#ec4899";
+    case "random_split":
+      return "#f97316";
+    case "http_request":
+      return "#0284c7";
+    case "conversion_pixel":
+      return "#059669";
+    case "flow_connection":
+      return "#7c3aed";
+    case "internal_task":
+    case "move_lead":
+    case "edit_lead_tag":
+      return "#475569";
+    case "end":
+      return "#ef4444";
+    default:
+      return "#94a3b8";
+  }
+}
 
 // Defined outside the component — React Flow warns (and re-mounts nodes) if
 // nodeTypes is a fresh object every render.
@@ -540,6 +579,8 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
             multiSelectionKeyCode={["Meta", "Control", "Shift"]}
             defaultEdgeOptions={{ type: "default" }}
             connectionLineType={ConnectionLineType.Bezier}
+            minZoom={0.05}
+            maxZoom={2.5}
             // Enquadrar só o que já existia ao abrir. Num fluxo vazio o XYFlow
             // guarda o enquadramento para quando o PRIMEIRO nó for medido — e
             // enquadrar um nó só é ampliá-lo ao zoom máximo (2x): quem acabou de
@@ -547,9 +588,23 @@ function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
             // nós seguintes nascendo fora da vista (medido no trace do e2e
             // followup-cartoes: scale 1 → 2 logo após o primeiro clique).
             fitView={initial.nodes.length > 0}
+            fitViewOptions={{ padding: 0.25, minZoom: 0.05, maxZoom: 1.2 }}
           >
             <Background />
-            <Controls />
+            <Controls showFitView={true} position="bottom-left" />
+            <MiniMap
+              position="bottom-right"
+              nodeColor={miniMapNodeColor}
+              nodeStrokeWidth={2}
+              nodeBorderRadius={6}
+              maskColor="rgba(15, 23, 42, 0.65)"
+              maskStrokeColor="var(--color-accent-500, #3b82f6)"
+              maskStrokeWidth={2}
+              pannable
+              zoomable
+              className="!hidden sm:!block !rounded-xl !border !border-border/80 !bg-card/85 !shadow-xl !backdrop-blur-md overflow-hidden"
+              style={{ width: 180, height: 120 }}
+            />
           </ReactFlow>
           {previewOpen && previewSession && (
             <div className="absolute left-3 right-3 top-3 z-10 mx-auto max-w-md rounded-xl border border-border bg-surface/95 p-3 shadow-sm backdrop-blur-sm" data-testid="preview-canvas-status">
