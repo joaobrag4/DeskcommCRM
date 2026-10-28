@@ -108,6 +108,9 @@ describe("sessão local do fluxo", () => {
   it.each([
     node("ai", "action", { mode: "ai_message", prompt_hint: "Fale" }),
     node("smart", "wait", { mode: "smart", min_ms: 300_000, max_ms: 600_000 }),
+    node("business-hours", "wait", { mode: "business_hours" }),
+    node("time-of-day", "wait", { mode: "time_of_day" }),
+    node("business-days", "wait", { mode: "business_days" }),
     node("classify", "ai_classify", { classes: ["sim"], grace_timeout_ms: 900_000 }),
     node("save", "match_reply", {
       branches: [{ id: "yes", label: "Sim", op: "eq", pattern: "sim" }],

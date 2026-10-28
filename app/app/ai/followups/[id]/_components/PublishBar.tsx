@@ -36,7 +36,7 @@ import {
   useUpdateHandoffPolicy,
   type FollowupFlowDetailRow,
 } from "@/hooks/followup/useFollowupFlow";
-import { Trash, TreeStructure } from "@/lib/ui/icons";
+import { ArrowBendUpLeft, ArrowBendUpRight, Trash, TreeStructure } from "@/lib/ui/icons";
 import { FlowStatusBadge } from "../../_components/FlowStatusBadge";
 import { DeleteFollowupFlowButton } from "../../_components/DeleteFollowupFlowButton";
 import { RenameFollowupFlowButton } from "../../_components/RenameFollowupFlowButton";
@@ -56,6 +56,10 @@ interface Props {
   canAutoFit?: boolean;
   onOpenPreview?: () => void;
   previewActive?: boolean;
+  onUndo?: () => void;
+  canUndo?: boolean;
+  onRedo?: () => void;
+  canRedo?: boolean;
 }
 
 const HANDOFF_LABEL: Record<FollowupFlowDetailRow["handoff_policy"], string> = {
@@ -78,6 +82,10 @@ export function PublishBar({
   canAutoFit = false,
   onOpenPreview,
   previewActive = false,
+  onUndo,
+  canUndo = false,
+  onRedo,
+  canRedo = false,
 }: Props) {
   const t = useT();
   const [openDeleteSelection, setOpenDeleteSelection] = useState(false);
@@ -210,6 +218,36 @@ export function PublishBar({
         >
           {t("Rollback")}
         </Button>
+        {onUndo && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canUndo}
+            onClick={onUndo}
+            data-testid="undo-flow"
+            title={t("Desfazer (Ctrl+Z)")}
+            aria-label={t("Desfazer (Ctrl+Z)")}
+          >
+            <ArrowBendUpLeft size={14} aria-hidden className="mr-1" />
+            {t("Desfazer")}
+          </Button>
+        )}
+        {onRedo && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canRedo}
+            onClick={onRedo}
+            data-testid="redo-flow"
+            title={t("Refazer (Ctrl+Y)")}
+            aria-label={t("Refazer (Ctrl+Y)")}
+          >
+            <ArrowBendUpRight size={14} aria-hidden className="mr-1" />
+            {t("Refazer")}
+          </Button>
+        )}
         {onAutoFit && (
           <Button
             type="button"

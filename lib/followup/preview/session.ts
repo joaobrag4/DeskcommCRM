@@ -82,7 +82,9 @@ function unsupported(node: FlowNode): boolean {
     case "action":
       return node.config.mode !== "text";
     case "wait":
-      return node.config.mode === "smart";
+      // A prévia só simula espera fixa. Os outros modos dependem de regras de
+      // calendário/fuso que ainda não são reproduzidas pelo relógio virtual.
+      return node.config.mode !== "fixed";
     case "match_reply":
       return node.config.save_to !== undefined;
     case "end":

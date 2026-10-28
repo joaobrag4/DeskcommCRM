@@ -49,9 +49,10 @@ test("prévia usa o rascunho, mostra percurso e não executa efeitos externos", 
     await page.getByLabel("Texto enviado ao contato").fill("Convite editado sem salvar");
 
     const prohibited: string[] = [];
-    await page.route("**/api/v1/**", async (route) => {
+    await page.route("**/*", async (route) => {
       const req = route.request();
-      if (!["GET", "HEAD", "OPTIONS"].includes(req.method()) && /(?:followup|messages|contacts|tasks|payments|meta|agent-turn)/.test(req.url())) {
+      const sameOrigin = new URL(req.url()).origin === new URL(page.url()).origin;
+      if (sameOrigin && !["GET", "HEAD", "OPTIONS"].includes(req.method())) {
         prohibited.push(`${req.method()} ${new URL(req.url()).pathname}`);
         await route.abort();
       } else await route.continue();
@@ -68,6 +69,8 @@ test("prévia usa o rascunho, mostra percurso e não executa efeitos externos", 
 
     await page.screenshot({ path: testInfo.outputPath("preview-desktop.png"), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("dialog", { name: "Prévia da conversa" })).toBeVisible();
+    await expect(page.getByTestId("flow-preview-canvas-inert-region")).toHaveAttribute("inert", "");
     await panel.getByLabel("Resposta do contato fictício").scrollIntoViewIfNeeded();
     await expect(panel.getByLabel("Resposta do contato fictício")).toBeVisible();
     expect(await panel.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
@@ -80,11 +83,11 @@ test("prévia usa o rascunho, mostra percurso e não executa efeitos externos", 
     await panel.getByRole("button", { name: "Fechar prévia", exact: true }).click();
     await expect(panel).toHaveCount(0);
     await expect(page.getByTestId("open-flow-preview")).toBeFocused();
-    await page.unroute("**/api/v1/**");
+    await page.unroute("**/*");
     const stored = await (await page.request.get(url)).json() as { data: { draft_graph: FlowGraph } };
     expect(stored.data.draft_graph).toEqual(graph);
   } finally {
-    await page.unroute("**/api/v1/**");
+    await page.unroute("**/*");
     expect((await page.request.delete(url)).ok()).toBe(true);
   }
 });
