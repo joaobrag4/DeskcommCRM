@@ -619,6 +619,9 @@ export const ALVOS_DA_CLASSIFICACAO: Record<AlvoDaClassificacao, string> = {
 export const MODOS_DE_ESPERA: Record<ModoDeEspera, string> = {
   fixed: "Tempo fixo",
   smart: "A IA escolhe a hora",
+  business_hours: "Horário comercial",
+  time_of_day: "Horário específico",
+  business_days: "Dias úteis",
 };
 
 export const MODOS_DA_ACAO: Record<ModoDaAcao, string> = {
@@ -626,6 +629,41 @@ export const MODOS_DA_ACAO: Record<ModoDaAcao, string> = {
   ai_message: "Mensagem escrita pela IA",
   template: "Modelo de mensagem pronto",
 };
+
+// ─── novos nós Leona ──────────────────────────────────────────────────────
+
+export const METODOS_HTTP = {
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  DELETE: "DELETE",
+  PATCH: "PATCH",
+} as const;
+
+export const TIPOS_DE_MENU_INTERATIVO = {
+  buttons: "Botões rápidos",
+  list: "Lista de opções",
+} as const;
+
+export const PROVEDORES_DE_PIXEL = {
+  meta: "Meta Conversions API",
+  google: "Google Ads / GA4",
+  both: "Meta + Google",
+} as const;
+
+export const EVENTOS_DE_PIXEL = {
+  Lead: "Lead",
+  Schedule: "Agendamento",
+  Contact: "Contato",
+  Purchase: "Compra",
+  CompleteRegistration: "Cadastro completo",
+  Custom: "Personalizado",
+} as const;
+
+export const TIPOS_DE_MIDIA_CARROSSEL = {
+  image: "Imagem",
+  video: "Vídeo",
+} as const;
 
 // ─── prioridade da tarefa (ação create_task, #1540) ────────────────────────
 

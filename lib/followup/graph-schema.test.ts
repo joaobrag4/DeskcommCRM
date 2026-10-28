@@ -42,6 +42,12 @@ describe('graph-schema', () => {
         // #2065 — dois tipos de ação que não falam com o cliente.
         'move_lead',
         'edit_lead_tag',
+        'http_request',
+        'interactive_menu',
+        'flow_connection',
+        'conversion_pixel',
+        'carousel',
+        'random_split',
         'end',
       ]);
     });
@@ -57,7 +63,7 @@ describe('graph-schema', () => {
       it('accepts valid fixed duration', () => {
         const result = waitConfigSchema.safeParse({
           mode: 'fixed',
-          duration_ms: 300_000, // 5 min
+          duration_ms: 5_000, // 5 s
         });
         expect(result.success).toBe(true);
       });
@@ -70,10 +76,10 @@ describe('graph-schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('rejects duration below 5 min', () => {
+      it('rejects duration below 5 s', () => {
         const result = waitConfigSchema.safeParse({
           mode: 'fixed',
-          duration_ms: 299_999,
+          duration_ms: 4_999,
         });
         expect(result.success).toBe(false);
       });
@@ -89,7 +95,7 @@ describe('graph-schema', () => {
       it('rejects extra keys', () => {
         const result = waitConfigSchema.safeParse({
           mode: 'fixed',
-          duration_ms: 300_000,
+          duration_ms: 5_000,
           extra_key: 'should reject',
         });
         expect(result.success).toBe(false);
@@ -98,7 +104,7 @@ describe('graph-schema', () => {
       it('rejects non-integer duration', () => {
         const result = waitConfigSchema.safeParse({
           mode: 'fixed',
-          duration_ms: 300_000.5,
+          duration_ms: 5_000.5,
         });
         expect(result.success).toBe(false);
       });

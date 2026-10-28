@@ -40,6 +40,7 @@ const TYPE_ORDER: Record<NodeType, number> = {
   condition: 2,
   ai_classify: 3,
   match_reply: 4,
+  random_split: 4.5,
   repeat: 5,
   collect: 6,
   skill: 7,
@@ -51,6 +52,11 @@ const TYPE_ORDER: Record<NodeType, number> = {
   // porque são o MEIO do caminho (mover o card, etiquetar) e não o epílogo.
   move_lead: 8.5,
   edit_lead_tag: 8.6,
+  http_request: 8.7,
+  interactive_menu: 8.8,
+  carousel: 8.85,
+  conversion_pixel: 8.9,
+  flow_connection: 8.95,
   end: 9,
 };
 

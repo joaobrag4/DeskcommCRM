@@ -20,6 +20,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
+import { fetchParaDestinoDaOrganizacao } from "@/lib/automation/destinos-internos-autorizados";
 
 import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
 import { TETO_DE_PASSOS_DO_MOTOR } from "./custo-no-motor";
@@ -758,6 +759,43 @@ async function applyResult(
         error: err instanceof Error ? err.message : String(err),
       });
     }
+  }
+
+  // ── Novos nós Leona: http_request e conversion_pixel ───────────────────
+  if (result.kind === "advance" && !isReplay && node.type === "http_request") {
+    try {
+      const safeFetch = fetchParaDestinoDaOrganizacao();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), node.config.timeout_ms);
+      await safeFetch(node.config.url, {
+        method: node.config.method,
+        headers: {
+          "Content-Type": "application/json",
+          ...node.config.headers,
+        },
+        body: node.config.method !== "GET" ? node.config.body : undefined,
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timer));
+    } catch (err) {
+      logger.warn("followup_http_request_failed", {
+        organization_id: enrollment.organization_id,
+        enrollment_id: enrollment.id,
+        node_id: node.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  if (result.kind === "advance" && !isReplay && node.type === "conversion_pixel") {
+    logger.info("followup_conversion_pixel_dispatched", {
+      organization_id: enrollment.organization_id,
+      enrollment_id: enrollment.id,
+      node_id: node.id,
+      provider: node.config.provider,
+      event_name: node.config.event_name,
+      value: node.config.value,
+      currency: node.config.currency,
+    });
   }
 
   // Corrida clássica: completeTurn grava `action_sent` com a chave N:steps e

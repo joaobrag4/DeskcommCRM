@@ -1,0 +1,69 @@
+.flow-preview-canvas .flow-preview-node {
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: 5px;
+  border-radius: var(--radius-lg);
+}
+
+.flow-preview-canvas .flow-preview-node::after {
+  content: attr(data-preview-label);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  max-width: 100%;
+  padding: 3px 9px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  border-radius: var(--radius-full);
+  color: var(--color-accent-700);
+  background: var(--color-accent-100);
+  pointer-events: none;
+}
+
+.flow-preview-canvas .flow-preview-node:not([data-preview-state="visited"]) {
+  outline: 3px solid var(--color-accent-500);
+  box-shadow: 0 0 0 9px color-mix(in srgb, var(--color-accent-500) 12%, transparent);
+}
+
+.flow-preview-canvas .flow-preview-node[data-preview-state="waiting_reply"],
+.flow-preview-canvas .flow-preview-node[data-preview-state="waiting_time"],
+.flow-preview-canvas .flow-preview-node[data-preview-state="paused"] {
+  outline-color: var(--color-warning-fg);
+}
+
+.flow-preview-canvas .flow-preview-node[data-preview-state="waiting_reply"]::after,
+.flow-preview-canvas .flow-preview-node[data-preview-state="waiting_time"]::after,
+.flow-preview-canvas .flow-preview-node[data-preview-state="paused"]::after {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-fg);
+}
+
+.flow-preview-canvas .flow-preview-node[data-preview-state="error"],
+.flow-preview-canvas .flow-preview-node[data-preview-state="unsupported"] {
+  outline-color: var(--color-error-fg);
+}
+
+.flow-preview-canvas .flow-preview-node[data-preview-state="error"]::after,
+.flow-preview-canvas .flow-preview-node[data-preview-state="unsupported"]::after {
+  color: var(--color-error-fg);
+  background: var(--color-error-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-preview-canvas .react-flow__edge-path { animation: none !important; }
+}
+
+/* Caixa de seleção e destaque em lote para touchpad e mouse */
+.react-flow__selection {
+  background: color-mix(in srgb, var(--color-accent-500, #3b82f6) 12%, transparent);
+  border: 1.5px dashed var(--color-accent-500, #3b82f6);
+  border-radius: 4px;
+}
+
+.react-flow__nodesselection-rect {
+  border: 1.5px dashed var(--color-accent-500, #3b82f6);
+  border-radius: 6px;
+}

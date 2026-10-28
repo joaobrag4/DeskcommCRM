@@ -676,17 +676,86 @@ export function processNode(input: {
         // prenderia o lead muito além do que o operador configurou na tela, e
         // ninguém veria. Custa uma comparação por espera.
         const planejada = node.config.mode === "smart" ? esperaPlanejadaDe(enrollment.timing_plan, node.id) : null;
-        const durationMs =
-          node.config.mode === "fixed"
-            ? node.config.duration_ms
-            : planejada === null
+        let durationMs = 300_000;
+        if (node.config.mode === "fixed") {
+          durationMs = node.config.duration_ms;
+        } else if (node.config.mode === "smart") {
+          durationMs =
+            planejada === null
               ? node.config.max_ms
               : clampEspera(planejada.escolhido_ms, node.config.min_ms, node.config.max_ms).escolhido_ms;
+        } else if (node.config.mode === "time_of_day") {
+          const parts = node.config.target_time.split(":");
+          const hh = Number(parts[0] ?? "9");
+          const mm = Number(parts[1] ?? "0");
+          const target = new Date(clock());
+          target.setHours(hh, mm, 0, 0);
+          if (target.getTime() <= clock().getTime()) {
+            target.setDate(target.getDate() + 1);
+          }
+          if (node.config.delay_days > 0) {
+            target.setDate(target.getDate() + node.config.delay_days);
+          }
+          durationMs = Math.max(5000, target.getTime() - clock().getTime());
+        } else if (node.config.mode === "business_days") {
+          const days = node.config.days;
+          const target = new Date(clock());
+          let added = 0;
+          while (added < days) {
+            target.setDate(target.getDate() + 1);
+            const day = target.getDay();
+            if (day !== 0 && day !== 6) {
+              added++;
+            }
+          }
+          if (node.config.deliver_at) {
+            const parts = node.config.deliver_at.split(":");
+            const hh = Number(parts[0] ?? "9");
+            const mm = Number(parts[1] ?? "0");
+            target.setHours(hh, mm, 0, 0);
+          }
+          durationMs = Math.max(5000, target.getTime() - clock().getTime());
+        } else if (node.config.mode === "business_hours") {
+          const startParts = node.config.start_time.split(":");
+          const startH = Number(startParts[0] ?? "9");
+          const startM = Number(startParts[1] ?? "0");
+          const endParts = node.config.end_time.split(":");
+          const endH = Number(endParts[0] ?? "18");
+          const endM = Number(endParts[1] ?? "0");
+          const days = node.config.days_of_week ?? [1, 2, 3, 4, 5];
+          const now = clock();
+          const currentDay = now.getDay();
+          const currentMinutes = now.getHours() * 60 + now.getMinutes();
+          const startMinutes = startH * 60 + startM;
+          const endMinutes = endH * 60 + endM;
+
+          if (days.includes(currentDay) && currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+            durationMs = 0;
+          } else if (days.includes(currentDay) && currentMinutes < startMinutes) {
+            const target = new Date(now);
+            target.setHours(startH, startM, 0, 0);
+            durationMs = Math.max(5000, target.getTime() - now.getTime());
+          } else {
+            const target = new Date(now);
+            target.setHours(startH, startM, 0, 0);
+            let found = false;
+            for (let i = 1; i <= 7; i++) {
+              target.setDate(target.getDate() + 1);
+              if (days.includes(target.getDay())) {
+                durationMs = Math.max(5000, target.getTime() - now.getTime());
+                found = true;
+                break;
+              }
+            }
+            if (!found) durationMs = 300_000;
+          }
+        }
+
         // Espera imune dorme: o status tira a inscrição do alcance da
         // reatividade (que decide por status, sem carregar o grafo) e libera o
         // slot único anti-spam enquanto ela espera. Quem a acorda continua sendo
         // o `next_eval_at` abaixo, pelo mesmo claim — não há segundo agendador.
-        const imune = node.config.mode === "fixed" && node.config.immune_to_reply === true;
+        const imune = "immune_to_reply" in node.config && node.config.immune_to_reply === true;
         return {
           kind: "wait",
           next_eval_at: new Date(clock().getTime() + durationMs),
@@ -946,6 +1015,75 @@ export function processNode(input: {
       // este nó não está em `NOS_QUE_ENVIAM`).
       const edge = selectEdge(edges, node.id, { type: "always" });
       if (!edge) return { kind: "fail", error: `edit_lead_tag node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "http_request": {
+      // Dispara chamada HTTP externa e bifurca por status 2xx (success) ou erro (failure)
+      const successEdge = selectEdge(edges, node.id, { type: "branch", branch_id: "success" });
+      const failEdge = selectEdge(edges, node.id, { type: "branch", branch_id: "failure" });
+      const alwaysEdge = selectEdge(edges, node.id, { type: "always" });
+      const edge = successEdge ?? alwaysEdge ?? failEdge;
+      if (!edge) return { kind: "fail", error: `http_request node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "interactive_menu": {
+      // Envia menu com botões/lista WhatsApp e aguarda clique
+      if (actionCompleted) {
+        const edge = selectEdge(edges, node.id, { type: "always" });
+        if (!edge) return { kind: "fail", error: `interactive_menu node "${node.id}" has no outbound edge` };
+        return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+      }
+      return {
+        kind: "recheck",
+        next_eval_at: new Date(clock().getTime() + atrasoDoRecheck(actionRecheckCount ?? 0)),
+      };
+    }
+
+    case "flow_connection": {
+      // Transfere o lead para outro fluxo como desfecho terminal
+      return { kind: "complete", outcome: null, cancel_reason: `transferred_to_flow:${node.config.target_flow_id}` };
+    }
+
+    case "conversion_pixel": {
+      // Disparo de pixel/conversão de telemetria
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `conversion_pixel node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "carousel": {
+      // Envio de carrossel de mídia
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `carousel node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "random_split": {
+      const paths = node.config.paths ?? [];
+      if (paths.length === 0) {
+        return { kind: "fail", error: `random_split node "${node.id}" has no paths configured` };
+      }
+      const totalWeight = paths.reduce((acc, p) => acc + p.weight, 0);
+      let roll = Math.random() * (totalWeight > 0 ? totalWeight : 1);
+      let chosen = paths[0]!;
+      for (const p of paths) {
+        if (roll < p.weight) {
+          chosen = p;
+          break;
+        }
+        roll -= p.weight;
+      }
+      const edge =
+        selectEdge(edges, node.id, { type: "branch", branch_id: chosen.id }) ??
+        selectEdge(edges, node.id, { type: "always" });
+      if (!edge) {
+        return {
+          kind: "fail",
+          error: `random_split node "${node.id}" has no outbound edge for chosen path "${chosen.id}"`,
+        };
+      }
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 

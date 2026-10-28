@@ -271,8 +271,44 @@ function cicloDoEncadeamento(
  * recusava em silêncio; a recusa aqui é o erro que a pessoa lê no editor.
  */
 export const NOS_DA_SUPERFICIE: Record<FollowupFlowSurface, readonly NodeType[]> = {
-  followup: ['trigger', 'wait', 'condition', 'ai_classify', 'match_reply', 'repeat', 'action', 'internal_task', 'move_lead', 'edit_lead_tag', 'end'],
-  crm_automation: ['trigger', 'wait', 'condition', 'ai_classify', 'match_reply', 'repeat', 'action', 'internal_task', 'move_lead', 'edit_lead_tag', 'end'],
+  followup: [
+    'trigger',
+    'wait',
+    'condition',
+    'ai_classify',
+    'match_reply',
+    'repeat',
+    'action',
+    'internal_task',
+    'move_lead',
+    'edit_lead_tag',
+    'http_request',
+    'interactive_menu',
+    'flow_connection',
+    'conversion_pixel',
+    'carousel',
+    'random_split',
+    'end',
+  ],
+  crm_automation: [
+    'trigger',
+    'wait',
+    'condition',
+    'ai_classify',
+    'match_reply',
+    'repeat',
+    'action',
+    'internal_task',
+    'move_lead',
+    'edit_lead_tag',
+    'http_request',
+    'interactive_menu',
+    'flow_connection',
+    'conversion_pixel',
+    'carousel',
+    'random_split',
+    'end',
+  ],
   atendimento: ['trigger', 'collect', 'skill', 'end'],
 };
 
@@ -283,7 +319,7 @@ export const NOS_DA_SUPERFICIE: Record<FollowupFlowSurface, readonly NodeType[]>
  * de atendimento — superfícies que não têm a marca "somente interno" e, num
  * fluxo interno, já teriam sido recusadas por `no_fora_da_superficie`.
  */
-const NOS_QUE_ENVIAM: readonly NodeType[] = ['action'];
+const NOS_QUE_ENVIAM: readonly NodeType[] = ['action', 'interactive_menu', 'carousel'];
 
 /**
  * SOMENTE INTERNO (#1540): o fluxo marcou que não fala com o cliente, e tem nó
@@ -413,6 +449,8 @@ export const CONTA_NO_TETO: Record<NodeType, boolean> = {
   action: true, // mensagem: texto, IA ou modelo
   collect: true, // pergunta do roteiro de atendimento
   skill: true, // o turno em que a skill entra no contexto do agente
+  interactive_menu: true, // menu interativo com botões/listas
+  carousel: true, // carrossel de mídia com cards
   // Faz o cliente esperar.
   wait: true,
   ai_classify: true, // parado esperando a resposta classificar (grace)
@@ -424,20 +462,26 @@ export const CONTA_NO_TETO: Record<NodeType, boolean> = {
   internal_task: false, // lembrete para a equipe
   move_lead: false, // move o card no funil
   edit_lead_tag: false, // grava tag no lead
+  http_request: false, // webhook externo
+  flow_connection: false, // transição entre fluxos
+  conversion_pixel: false, // telemetria/conversão
+  random_split: false, // divisão/distribuição de tráfego
   end: false, // desfecho
 };
 
 function waitMs(config: Extract<FlowNode, { type: 'wait' }>['config']): number {
-  return config.mode === 'fixed' ? config.duration_ms : config.max_ms;
+  if (config.mode === 'fixed') return config.duration_ms;
+  if (config.mode === 'smart') return config.max_ms;
+  return 300_000;
 }
 
 /** A wait node whose duration meets the 5min floor required to break a cycle. */
 function isSufficientWaitNode(node: FlowNode): boolean {
   if (node.type === 'match_reply') return node.config.grace_timeout_ms >= MIN_CYCLE_WAIT_MS;
   if (node.type !== 'wait') return false;
-  return node.config.mode === 'fixed'
-    ? node.config.duration_ms >= MIN_CYCLE_WAIT_MS
-    : node.config.min_ms >= MIN_CYCLE_WAIT_MS;
+  if (node.config.mode === 'fixed') return node.config.duration_ms >= MIN_CYCLE_WAIT_MS;
+  if (node.config.mode === 'smart') return node.config.min_ms >= MIN_CYCLE_WAIT_MS;
+  return true;
 }
 
 function buildOutEdges(edges: FlowEdge[]): Map<string, FlowEdge[]> {
@@ -1001,6 +1045,8 @@ function conferirRegras(
 
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const validarGrafoParaPublish = validateFlowForPublish;
+
 export function validateFlowForPublish(
   graph: FlowGraph,
   contexto: ContextoDoPublish = {}
@@ -1227,6 +1273,12 @@ export function validateFlowForPublish(
         message: `Nó "${node.id}" tem grace_timeout_ms abaixo do mínimo de 15min.`,
       });
     }
+  }
+
+  for (const node of [...nodes].sort(byId)) {
+    if (node.type !== 'random_split') continue;
+    const outgoing = outEdges.get(node.id) ?? [];
+    cobrirRamos(node, outgoing, errors, nomes);
   }
 
   // cycle_without_wait — exact, not an approximation: a directed cycle with no

@@ -16,7 +16,8 @@ ENV TZ=UTC
 RUN apk add --no-cache curl tzdata
 
 COPY docker/scheduler/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY docker/scheduler/followup-ticker.sh /usr/local/bin/followup-ticker.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/followup-ticker.sh
 
 # A versão depois das camadas que custam (o `apk add`): a instrução `ARG` entra
 # na chave de cache de tudo o que vem depois, e ela muda a cada release.

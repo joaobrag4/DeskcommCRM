@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   Controls,
+  MiniMap,
   ConnectionLineType,
+  SelectionMode,
+  PanOnScrollMode,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -15,8 +19,15 @@ import {
   type EdgeMouseHandler,
   type NodeMouseHandler,
   type NodeTypes,
+  type OnBeforeDelete,
+  type OnNodesDelete,
+  type OnEdgesDelete,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import "./preview/preview-canvas.css";
+import type { PreviewSession } from "@/lib/followup/preview/types";
+import type { PreviewMediaOrigins } from "@/lib/followup/preview/media-url";
+import { decoratePreviewCanvas, PREVIEW_STATUS_LABELS } from "./preview/canvas-feedback";
 
 import { estimateNodeSize, layoutFlowGraph, LAYOUT_NODE_WIDTH } from "@/lib/followup/auto-layout";
 import { semAresta, semArestasDoNo, semNo } from "@/lib/followup/excluir-do-grafo";
@@ -48,6 +59,7 @@ import { Plus, X } from "@/lib/ui/icons";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { EdgeConfigPanel } from "./EdgeConfigPanel";
 import { EtapasDoFluxoProvider, useEtapasDoFluxo } from "./EtapasDoFluxo";
+import { useFlowHistory } from "./useFlowHistory";
 import { NodePalette } from "./NodePalette";
 import { PublishBar } from "./PublishBar";
 import { NODE_VISUALS, configPadraoDaAcao } from "./nodes/nodeVisuals";
@@ -64,9 +76,57 @@ import { InternalTaskNode } from "./nodes/InternalTaskNode";
 import { MoveLeadNode } from "./nodes/MoveLeadNode";
 import { EditLeadTagNode } from "./nodes/EditLeadTagNode";
 import { SkillNode } from "./nodes/SkillNode";
+import { HttpRequestNode } from "./nodes/HttpRequestNode";
+import { InteractiveMenuNode } from "./nodes/InteractiveMenuNode";
+import { FlowConnectionNode } from "./nodes/FlowConnectionNode";
+import { ConversionPixelNode } from "./nodes/ConversionPixelNode";
+import { CarouselNode } from "./nodes/CarouselNode";
+import { RandomSplitNode } from "./nodes/RandomSplitNode";
 
 const EMPTY_GRAPH: FlowGraph = { nodes: [], edges: [] };
 const DND_MIME = "application/x-followup-node-type";
+const FlowPreview = dynamic(() => import("./preview/FlowPreview").then((m) => m.FlowPreview), {
+  ssr: false,
+  loading: () => <div className="p-6" role="status">…</div>,
+});
+
+function miniMapNodeColor(node: RFNode): string {
+  switch (node.type) {
+    case "trigger":
+      return "#10b981";
+    case "wait":
+      return "#64748b";
+    case "condition":
+      return "#f59e0b";
+    case "ai_classify":
+    case "match_reply":
+      return "#8b5cf6";
+    case "repeat":
+      return "#a855f7";
+    case "action":
+      return "#3b82f6";
+    case "interactive_menu":
+      return "#06b6d4";
+    case "carousel":
+      return "#ec4899";
+    case "random_split":
+      return "#f97316";
+    case "http_request":
+      return "#0284c7";
+    case "conversion_pixel":
+      return "#059669";
+    case "flow_connection":
+      return "#7c3aed";
+    case "internal_task":
+    case "move_lead":
+    case "edit_lead_tag":
+      return "#475569";
+    case "end":
+      return "#ef4444";
+    default:
+      return "#94a3b8";
+  }
+}
 
 // Defined outside the component — React Flow warns (and re-mounts nodes) if
 // nodeTypes is a fresh object every render.
@@ -88,6 +148,12 @@ const nodeTypes: NodeTypes = {
   // cima), sem rótulo e sem formulário.
   move_lead: MoveLeadNode,
   edit_lead_tag: EditLeadTagNode,
+  http_request: HttpRequestNode,
+  interactive_menu: InteractiveMenuNode,
+  flow_connection: FlowConnectionNode,
+  conversion_pixel: ConversionPixelNode,
+  carousel: CarouselNode,
+  random_split: RandomSplitNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,
@@ -96,9 +162,10 @@ const nodeTypes: NodeTypes = {
 interface Props {
   flowId: string;
   initialData: FollowupFlowDetailRow;
+  previewOrigins?: PreviewMediaOrigins;
 }
 
-function FlowCanvasInner({ flowId, initialData }: Props) {
+function FlowCanvasInner({ flowId, initialData, previewOrigins }: Props) {
   const t = useT();
   const { nomes } = useEtapasDoFluxo();
   const { data: flow } = useFollowupFlow(flowId, { initialData });
@@ -111,6 +178,13 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
   );
   const [nodes, setNodes, onNodesChange] = useNodesState<RFNode>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<RFEdge>(initial.edges);
+  const { pushSnapshot, undo, redo, canUndo, canRedo } = useFlowHistory({
+    initialNodes: initial.nodes,
+    initialEdges: initial.edges,
+    setNodes,
+    setEdges,
+    t,
+  });
   const [savedGraph, setSavedGraph] = useState<FlowGraph>(initialData.draft_graph ?? EMPTY_GRAPH);
   // As configurações do GRAFO (palavras-gatilho, teto de tentativas, prazo do
   // roteiro) não vivem em nó nenhum: sem este estado, salvar o rascunho as
@@ -122,10 +196,46 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
   // replace a connection in older drafts.
   const nextId = useRef(nextSequenceId(initial.nodes.map((node) => node.id)));
   const nextEdgeId = useRef(nextSequenceId(initial.edges.map((edge) => edge.id)));
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, getNodes, getEdges } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [mobileLayout, setMobileLayout] = useState(false);
+  const [previewSession, setPreviewSession] = useState<PreviewSession | null>(null);
+  const [followPreview, setFollowPreview] = useState(true);
+  const previewButtonRef = useRef<HTMLDivElement>(null);
+  const previewCanvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobileLayout(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const closePreview = useCallback(() => {
+    setPreviewOpen(false);
+    setPreviewSession(null);
+    previewButtonRef.current?.querySelector<HTMLButtonElement>("[data-testid='open-flow-preview']")?.focus();
+  }, []);
+
+  const locatePreviewNode = useCallback((id: string) => {
+    setSelectedNodeId(id);
+    setSelectedEdgeId(null);
+    void fitView({ nodes: [{ id }], padding: 0.8, minZoom: 0.6, maxZoom: 0.9, duration: 240 });
+    // Manual history navigation also reveals the stacked canvas on a phone.
+    // Automatic following only moves the flow viewport, preserving chat scroll.
+    previewCanvasRef.current?.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }, [fitView]);
+
+  const currentPreviewNodeId = previewSession?.currentNodeId;
+  useEffect(() => {
+    if (previewOpen && followPreview && currentPreviewNodeId) {
+      void fitView({ nodes: [{ id: currentPreviewNodeId }], padding: 0.8, minZoom: 0.6, maxZoom: 0.9, duration: 240 });
+    }
+  }, [previewOpen, followPreview, currentPreviewNodeId, fitView]);
 
   const liveGraph = useMemo(() => {
     const base = fromReactFlow(nodes, edges);
@@ -159,17 +269,23 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
 
   const updateNodeData = useCallback(
     (id: string, patch: Partial<RFNodeData>) => {
-      setNodes((nds) => nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)));
+      setNodes((nds) => {
+        const next = nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n));
+        pushSnapshot(next, edges);
+        return next;
+      });
     },
-    [setNodes],
+    [setNodes, edges, pushSnapshot],
   );
   const updateEdgeCondition = useCallback(
     (id: string, condition: FlowEdge["condition"]) => {
-      setEdges((eds) =>
-        eds.map((e) => (e.id === id ? { ...e, data: { priority: e.data?.priority ?? 0, condition } } : e)),
-      );
+      setEdges((eds) => {
+        const next = eds.map((e) => (e.id === id ? { ...e, data: { priority: e.data?.priority ?? 0, condition } } : e));
+        pushSnapshot(nodes, next);
+        return next;
+      });
     },
-    [setEdges],
+    [setEdges, nodes, pushSnapshot],
   );
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
@@ -194,7 +310,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           : undefined;
         return {
           ...e,
-          type: "smoothstep" as const,
+          type: "default" as const,
           label: branch ? t(rotuloDoRamo(branch, nomes)) : t(conditionLabel(condition)),
           selected: e.id === selectedEdgeId,
         };
@@ -233,9 +349,13 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
         targetHandle: connection.targetHandle,
         data: { priority: 0, condition: fromBranch ?? { type: "always" } },
       };
-      setEdges((eds) => addEdge(newEdge, eds));
+      setEdges((eds) => {
+        const next = addEdge(newEdge, eds);
+        pushSnapshot(nodes, next);
+        return next;
+      });
     },
-    [setEdges, nodes],
+    [setEdges, nodes, pushSnapshot],
   );
 
   // O nó de ação nasce com o padrão do gatilho do fluxo. O callback depende só
@@ -254,9 +374,13 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
         position,
         data: { label: t(visual.defaultLabel), config },
       };
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => {
+        const next = nds.concat(newNode);
+        pushSnapshot(next, edges);
+        return next;
+      });
     },
-    [setNodes, t, triggerKind],
+    [setNodes, t, triggerKind, edges, pushSnapshot],
   );
 
   const onPaletteAdd = useCallback(
@@ -269,25 +393,104 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
 
   const deleteNode = useCallback(
     (id: string) => {
-      setNodes((nds) => semNo(nds, id));
-      setEdges((eds) => semArestasDoNo(eds, id));
+      const target = nodes.find((n) => n.id === id);
+      if (target?.type === "trigger") return;
+      const nextNodes = semNo(nodes, id);
+      const nextEdges = semArestasDoNo(edges, id);
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      pushSnapshot(nextNodes, nextEdges);
       setSelectedNodeId((cur) => (cur === id ? null : cur));
     },
-    [setNodes, setEdges],
+    [nodes, edges, setNodes, setEdges, pushSnapshot],
   );
 
   const deleteEdge = useCallback(
     (id: string) => {
-      setEdges((eds) => semAresta(eds, id));
+      const nextEdges = semAresta(edges, id);
+      setEdges(nextEdges);
+      pushSnapshot(nodes, nextEdges);
       setSelectedEdgeId((cur) => (cur === id ? null : cur));
     },
-    [setEdges],
+    [nodes, edges, setEdges, pushSnapshot],
+  );
+
+  const onBeforeDelete: OnBeforeDelete<RFNode, RFEdge> = useCallback(
+    async ({ nodes: nodesToDelete, edges: edgesToDelete }) => {
+      // O nó de gatilho nunca pode ser excluído
+      const filtrados = nodesToDelete.filter((n) => n.type !== "trigger");
+      return {
+        nodes: filtrados,
+        edges: edgesToDelete,
+      };
+    },
+    [],
+  );
+
+  const onNodesDelete: OnNodesDelete<RFNode> = useCallback(
+    (deletedNodes) => {
+      const deletedIds = new Set(deletedNodes.map((n) => n.id));
+      const nextNodes = nodes.filter((n) => !deletedIds.has(n.id));
+      const nextEdges = edges.filter(
+        (e) => !deletedIds.has(e.source) && !deletedIds.has(e.target),
+      );
+      setEdges(nextEdges);
+      pushSnapshot(nextNodes, nextEdges);
+      setSelectedNodeId((cur) => (cur && deletedIds.has(cur) ? null : cur));
+    },
+    [nodes, edges, setEdges, pushSnapshot],
+  );
+
+  const onEdgesDelete: OnEdgesDelete<RFEdge> = useCallback(
+    (deletedEdges) => {
+      const deletedIds = new Set(deletedEdges.map((e) => e.id));
+      const nextEdges = edges.filter((e) => !deletedIds.has(e.id));
+      setEdges(nextEdges);
+      pushSnapshot(nodes, nextEdges);
+      setSelectedEdgeId((cur) => (cur && deletedIds.has(cur) ? null : cur));
+    },
+    [nodes, edges, setEdges, pushSnapshot],
+  );
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selNodes, edges: selEdges }: { nodes: RFNode[]; edges: RFEdge[] }) => {
+      if (selNodes.length > 1) {
+        setSelectedNodeId(null);
+      }
+      if (selEdges.length > 1) {
+        setSelectedEdgeId(null);
+      }
+    },
+    [],
   );
 
   const onDeleteSelection = useCallback(() => {
-    if (selectedNodeId) deleteNode(selectedNodeId);
-    else if (selectedEdgeId) deleteEdge(selectedEdgeId);
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge]);
+    const selectedNodes = nodes.filter((n) => n.selected && n.type !== "trigger");
+    const selectedEdges = edges.filter((e) => e.selected);
+    if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+      const nodeIds = new Set(selectedNodes.map((n) => n.id));
+      if (selectedNodeId) {
+        const single = nodes.find((n) => n.id === selectedNodeId);
+        if (single && single.type !== "trigger") nodeIds.add(selectedNodeId);
+      }
+      const edgeIds = new Set(selectedEdges.map((e) => e.id));
+      if (selectedEdgeId) edgeIds.add(selectedEdgeId);
+
+      const nextNodes = nodes.filter((n) => !nodeIds.has(n.id));
+      const nextEdges = edges.filter(
+        (e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target),
+      );
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      pushSnapshot(nextNodes, nextEdges);
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
+    } else if (selectedNodeId) {
+      deleteNode(selectedNodeId);
+    } else if (selectedEdgeId) {
+      deleteEdge(selectedEdgeId);
+    }
+  }, [nodes, edges, selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, setNodes, setEdges, pushSnapshot]);
 
   const onAutoFit = useCallback(() => {
     if (nodes.length === 0) return;
@@ -300,16 +503,24 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
     }
     const laid = layoutFlowGraph(liveGraph, sizes, nomes);
     const pos = new Map(laid.nodes.map((n) => [n.id, n.position]));
-    setNodes((nds) =>
-      nds.map((n) => {
-        const p = pos.get(n.id);
-        return p ? { ...n, position: p } : n;
-      }),
-    );
+    const nextNodes = nodes.map((n) => {
+      const p = pos.get(n.id);
+      return p ? { ...n, position: p } : n;
+    });
+    setNodes(nextNodes);
+    pushSnapshot(nextNodes, edges);
     window.setTimeout(() => {
       void fitView({ padding: 0.2, duration: 200 });
     }, 0);
-  }, [nodes, liveGraph, setNodes, fitView]);
+  }, [nodes, edges, liveGraph, setNodes, fitView, nomes, pushSnapshot]);
+
+  const onNodeDragStop = useCallback(() => {
+    pushSnapshot(getNodes() as RFNode[], getEdges() as RFEdge[]);
+  }, [getNodes, getEdges, pushSnapshot]);
+
+  const onSelectionDragStop = useCallback(() => {
+    pushSnapshot(getNodes() as RFNode[], getEdges() as RFEdge[]);
+  }, [getNodes, getEdges, pushSnapshot]);
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -327,25 +538,52 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
     [screenToFlowPosition, addNodeAt],
   );
 
+  const previewRender = useMemo(
+    () => decoratePreviewCanvas(nodes, edgesForRender, previewSession, t),
+    [nodes, edgesForRender, previewSession, t],
+  );
+  const previewNodeLabel = nodes.find((node) => node.id === currentPreviewNodeId)?.data.label;
+
   return (
-    <div className="flex h-full min-h-[600px] w-full flex-col">
+    <div className="flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden">
       {flow && (
+        <div ref={previewButtonRef} className="shrink-0">
         <PublishBar
           flowId={flowId}
           flow={flow}
           graph={liveGraph}
           dirty={dirty}
-          selection={selectedNode ? "node" : selectedEdge ? "edge" : null}
+          selection={
+            nodes.some((n) => n.selected && n.type !== "trigger") || (selectedNode && selectedNode.type !== "trigger")
+              ? "node"
+              : edges.some((e) => e.selected) || selectedEdge
+                ? "edge"
+                : null
+          }
           onDeleteSelection={onDeleteSelection}
           onSaved={setSavedGraph}
           onPublishErrors={markNodeErrors}
           onPublishSuccess={clearNodeErrors}
           onAutoFit={onAutoFit}
           canAutoFit={nodes.length > 0}
+          onUndo={undo}
+          canUndo={canUndo}
+          onRedo={redo}
+          canRedo={canRedo}
+          onOpenPreview={() => {
+            if (previewOpen) closePreview();
+            else {
+              setPreviewSession(null);
+              setPreviewOpen(true);
+              setPaletteOpen(false);
+            }
+          }}
+          previewActive={previewOpen}
         />
+        </div>
       )}
-      <div className="flex flex-1 overflow-hidden">
-        <NodePalette onAdd={onPaletteAdd} surface={surface} />
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {!previewOpen && <NodePalette onAdd={onPaletteAdd} surface={surface} />}
         {/* Abaixo de `lg` a paleta fixa de 224px não cabe do lado do canvas —
             vira um drawer, disparado por este botão flutuante. */}
         <Sheet open={paletteOpen} onOpenChange={setPaletteOpen}>
@@ -362,10 +600,27 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           </SheetContent>
         </Sheet>
 
-        <div className="relative h-full flex-1" data-testid="flow-canvas" onDragOver={onDragOver} onDrop={onDrop}>
+        <div
+          ref={previewCanvasRef}
+          className={`relative h-full min-h-0 min-w-0 flex-1 ${previewOpen ? "flow-preview-canvas" : ""}`}
+          data-testid="flow-canvas"
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onMouseDown={(e) => {
+            // Previne o modo de autoscroll nativo do Windows ao clicar e arrastar com a rodinha (botão do meio)
+            if (e.button === 1) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <div
+            className="absolute inset-0"
+            data-testid="flow-preview-canvas-inert-region"
+            inert={previewOpen && mobileLayout ? true : undefined}
+          >
           <ReactFlow
-            nodes={nodes}
-            edges={edgesForRender}
+            nodes={previewRender.nodes}
+            edges={previewRender.edges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -373,8 +628,27 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
-            defaultEdgeOptions={{ type: "smoothstep" }}
-            connectionLineType={ConnectionLineType.SmoothStep}
+            onBeforeDelete={onBeforeDelete}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
+            onSelectionChange={onSelectionChange}
+            onNodeDragStop={onNodeDragStop}
+            onSelectionDragStop={onSelectionDragStop}
+            panOnScroll={true}
+            panOnScrollMode={PanOnScrollMode.Free}
+            panOnScrollSpeed={1}
+            zoomOnPinch={true}
+            zoomOnScroll={false}
+            panOnDrag={[1, 2]}
+            selectionOnDrag={true}
+            selectionMode={SelectionMode.Partial}
+            panActivationKeyCode="Space"
+            deleteKeyCode={["Delete", "Backspace"]}
+            multiSelectionKeyCode={["Meta", "Control", "Shift"]}
+            defaultEdgeOptions={{ type: "default" }}
+            connectionLineType={ConnectionLineType.Bezier}
+            minZoom={0.05}
+            maxZoom={2.5}
             // Enquadrar só o que já existia ao abrir. Num fluxo vazio o XYFlow
             // guarda o enquadramento para quando o PRIMEIRO nó for medido — e
             // enquadrar um nó só é ampliá-lo ao zoom máximo (2x): quem acabou de
@@ -382,20 +656,99 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
             // nós seguintes nascendo fora da vista (medido no trace do e2e
             // followup-cartoes: scale 1 → 2 logo após o primeiro clique).
             fitView={initial.nodes.length > 0}
+            fitViewOptions={{ padding: 0.25, minZoom: 0.05, maxZoom: 1.2 }}
           >
             <Background />
-            <Controls />
+            <Controls showFitView={true} position="bottom-left" />
+            <MiniMap
+              position="bottom-right"
+              nodeColor={miniMapNodeColor}
+              nodeStrokeWidth={2}
+              nodeBorderRadius={6}
+              maskColor="rgba(15, 23, 42, 0.65)"
+              maskStrokeColor="var(--color-accent-500, #3b82f6)"
+              maskStrokeWidth={2}
+              pannable
+              zoomable
+              className="!hidden sm:!block !rounded-xl !border !border-border/80 !bg-card/85 !shadow-xl !backdrop-blur-md overflow-hidden"
+              style={{ width: 180, height: 120 }}
+            />
           </ReactFlow>
+          </div>
+          {previewOpen && previewSession && (
+            <div className="absolute left-3 right-3 top-3 z-10 mx-auto max-w-md rounded-xl border border-border bg-surface/95 p-3 shadow-sm backdrop-blur-sm" data-testid="preview-canvas-status">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-subtle">{t("Percurso da prévia")}</p>
+                  <p className="truncate text-sm font-semibold text-text">{previewNodeLabel ?? t("Escolha iniciar na conversa")}</p>
+                  <p className="mt-1 text-xs text-text-muted">{t(PREVIEW_STATUS_LABELS[previewSession.status])} · {previewSession.visitedNodeIds.length} {t("etapas percorridas")}</p>
+                </div>
+                <label className="flex shrink-0 items-center gap-2 text-xs text-text-muted">
+                  <input type="checkbox" checked={followPreview} onChange={(event) => setFollowPreview(event.target.checked)} className="accent-[var(--color-accent-500)]" />
+                  {t("Acompanhar")}
+                </label>
+              </div>
+              {currentPreviewNodeId && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => locatePreviewNode(currentPreviewNodeId)}>{t("Localizar etapa")}</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { locatePreviewNode(currentPreviewNodeId); closePreview(); }}>{t("Editar etapa")}</Button>
+                </div>
+              )}
+            </div>
+          )}
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            className="absolute bottom-4 left-4 z-10 shadow-md lg:hidden"
+            className={`absolute bottom-4 left-4 z-10 shadow-md lg:hidden ${previewOpen ? "hidden" : ""}`}
             onClick={() => setPaletteOpen(true)}
           >
             <Plus size={14} aria-hidden /> {t("Adicionar nó")}
           </Button>
         </div>
+
+        {previewOpen && (
+          <aside
+            id="flow-preview-panel"
+            aria-label={t("Prévia da conversa")}
+            role={mobileLayout ? "dialog" : undefined}
+            aria-modal={mobileLayout ? true : undefined}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && mobileLayout) {
+                event.preventDefault();
+                closePreview();
+                return;
+              }
+              if (event.key !== "Tab" || !mobileLayout) return;
+              const panel = event.currentTarget;
+              const focusable = panel.querySelectorAll<HTMLElement>(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+              );
+              const first = focusable.item(0);
+              const last = focusable.item(focusable.length - 1);
+              if (!first || !last) {
+                event.preventDefault();
+              } else if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
+                event.preventDefault();
+                last.focus();
+              } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+                event.preventDefault();
+                first.focus();
+              }
+            }}
+            className="absolute inset-0 z-20 flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden border-t border-border bg-surface md:static md:z-auto md:w-[380px] lg:w-[420px] lg:max-w-[45%] md:border-l md:border-t-0"
+          >
+            <FlowPreview
+              graph={liveGraph}
+              origins={previewOrigins}
+              cancelOnReply={flow?.trigger_config?.cancel_on_reply === true}
+              handoffPolicy={flow?.handoff_policy ?? "pause"}
+              onSessionChange={setPreviewSession}
+              onLocateNode={locatePreviewNode}
+              onClose={closePreview}
+            />
+          </aside>
+        )}
 
         {/*
           Docked panel em telas grandes (`lg:`) — NÃO é overlay ali: o canvas
@@ -406,7 +759,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           bottom sheet (`fixed`, ancorado embaixo, com teto de altura e X pra
           fechar) só nesse intervalo de tela.
         */}
-        {selectedNode && (
+        {selectedNode && !previewOpen && (
           <aside
             className="fixed inset-x-0 bottom-[var(--rodape-ocupado,0px)] z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:w-96 lg:max-h-none lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
             data-testid="node-config-sheet"
@@ -441,7 +794,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           </aside>
         )}
 
-        {selectedEdge && (
+        {selectedEdge && !previewOpen && (
           <aside
             className="fixed inset-x-0 bottom-[var(--rodape-ocupado,0px)] z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:w-96 lg:max-h-none lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
             data-testid="edge-config-sheet"

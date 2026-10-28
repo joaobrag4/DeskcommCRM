@@ -469,6 +469,8 @@ describe('validateFlowForPublish', () => {
         'collect',
         'skill',
         'action',
+        'interactive_menu',
+        'carousel',
       ]);
     });
   });

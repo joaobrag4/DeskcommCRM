@@ -8,7 +8,9 @@ import {
   Background,
   ConnectionLineType,
   Controls,
+  MiniMap,
   ReactFlow,
+  SelectionMode,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -179,7 +181,7 @@ export function CanvasDaAutomacao({ regra }: Props) {
         const origem = nos.find((n) => n.id === l.source);
         return {
           ...l,
-          type: "smoothstep" as const,
+          type: "default" as const,
           label: origem?.data.kind === "condicoes" ? t("se atender") : undefined,
           selected: l.id === ligacaoSelecionada,
         };
@@ -519,6 +521,11 @@ export function CanvasDaAutomacao({ regra }: Props) {
             e.dataTransfer.dropEffect = "move";
           }}
           onDrop={onDrop}
+          onMouseDown={(e) => {
+            if (e.button === 1) {
+              e.preventDefault();
+            }
+          }}
         >
           <ReactFlow
             nodes={nosNaTela}
@@ -530,15 +537,33 @@ export function CanvasDaAutomacao({ regra }: Props) {
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
+            panOnDrag={[1, 2]}
+            selectionOnDrag={true}
+            selectionMode={SelectionMode.Partial}
+            panActivationKeyCode="Space"
             // Excluir passa pelo nosso caminho, que fecha a fila e nunca tira o gatilho.
             deleteKeyCode={null}
-            defaultEdgeOptions={{ type: "smoothstep" }}
-            connectionLineType={ConnectionLineType.SmoothStep}
+            defaultEdgeOptions={{ type: "default" }}
+            connectionLineType={ConnectionLineType.Bezier}
+            minZoom={0.05}
+            maxZoom={2.5}
             fitView
-            fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+            fitViewOptions={{ padding: 0.2, minZoom: 0.05, maxZoom: 1 }}
           >
             <Background />
-            <Controls />
+            <Controls showFitView={true} position="bottom-left" />
+            <MiniMap
+              position="bottom-right"
+              nodeStrokeWidth={2}
+              nodeBorderRadius={6}
+              maskColor="rgba(15, 23, 42, 0.65)"
+              maskStrokeColor="var(--color-accent-500, #3b82f6)"
+              maskStrokeWidth={2}
+              pannable
+              zoomable
+              className="!hidden sm:!block !rounded-xl !border !border-border/80 !bg-card/85 !shadow-xl !backdrop-blur-md overflow-hidden"
+              style={{ width: 160, height: 100 }}
+            />
           </ReactFlow>
           <Button
             type="button"

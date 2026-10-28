@@ -35,10 +35,16 @@ export const CUSTO_NO_MOTOR: Record<NodeType, number> = {
   internal_task: 1,
   move_lead: 1,
   edit_lead_tag: 1,
+  http_request: 1,
+  flow_connection: 1,
+  conversion_pixel: 1,
+  random_split: 1,
   end: 1,
   // Dois ticks: arma e fecha.
   wait: 2,
   action: 2,
+  interactive_menu: 2,
+  carousel: 2,
   ai_classify: 2,
   match_reply: 2,
   // Roteiro de atendimento: outro motor (o do turno, não o do relógio) — aqui é

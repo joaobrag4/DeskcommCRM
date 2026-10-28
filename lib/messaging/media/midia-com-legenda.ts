@@ -58,11 +58,14 @@ const MIME_POR_EXTENSAO: Record<string, string> = {
   // saem pela MESMA rota de nota de voz com conversão (o transporte converte).
   ogg: "audio/ogg",
   opus: "audio/ogg",
+  oga: "audio/ogg",
   mp3: "audio/mpeg",
   m4a: "audio/mp4",
   aac: "audio/aac",
   amr: "audio/amr",
   wav: "audio/wav",
+  weba: "audio/webm",
+  flac: "audio/flac",
   // documento — a lista é a MESMA que o upload do Inbox aceita
   // (`DOCUMENT_MIMES`, em `./upload-validation.ts`): o que a tela deixa subir
   // tem de poder sair pelo passo automático.

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FollowupFlowDetailRow } from "@/hooks/followup/useFollowupFlow";
+import type { PreviewMediaOrigins } from "@/lib/followup/preview/media-url";
 
 /**
  * @xyflow/react is a large dependency — this is the ONLY route that loads it.
@@ -22,12 +23,16 @@ const FlowCanvas = dynamic(() => import("./FlowCanvas").then((m) => m.FlowCanvas
 interface Props {
   flowId: string;
   initialData: FollowupFlowDetailRow;
+  previewOrigins?: PreviewMediaOrigins;
 }
 
-export function FlowBuilder({ flowId, initialData }: Props) {
+export function FlowBuilder({ flowId, initialData, previewOrigins }: Props) {
   return (
-    <div className="flex h-full min-h-[600px] flex-1 flex-col" data-testid="flow-builder-shell">
-      <FlowCanvas flowId={flowId} initialData={initialData} />
+    <div
+      className="flex h-[calc(100dvh-var(--faixas-de-cima,0px)-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] max-h-[calc(100dvh-var(--faixas-de-cima,0px)-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] min-h-0 w-full flex-1 flex-col overflow-hidden"
+      data-testid="flow-builder-shell"
+    >
+      <FlowCanvas flowId={flowId} initialData={initialData} previewOrigins={previewOrigins} />
     </div>
   );
 }
